@@ -20,6 +20,7 @@
 #include <osg/ComputeBoundsVisitor>
 #include <osg/PolygonMode>
 #include <osg/LineWidth>
+#include <osg/Point>
 
 #include <osgDB/ReadFile>
 #include <osgDB/WriteFile>
@@ -653,6 +654,53 @@ osg::Geode* txFemSurf::CreateMesh()
 
 	osg::Geode* geode = new osg::Geode();
 
+	{
+		osg::Geometry* pointsGeom = new osg::Geometry();
+
+		osg::Vec3Array *vertspointlocal = new osg::Vec3Array;
+		osg::Vec3Array *vertpointnormallocal = new osg::Vec3Array;
+		for ( size_t i=0; i<verts.size(); ++i ) {
+			xtVec3df vert = verts[i];
+			xtVec3df norm = this->vertsnormal[i];
+			vertspointlocal->push_back(osg::Vec3(vert.v[0],vert.v[1],vert.v[2]));
+			vertpointnormallocal->push_back(osg::Vec3(norm.v[0],norm.v[1],norm.v[2]));
+		}
+
+        // pass the created vertex array to the points geometry object.
+        pointsGeom->setVertexArray(vertspointlocal);
+        
+        
+        
+        // create the color of the geometry, one single for the whole geometry.
+        // for consistency of design even one single color must added as an element
+        // in a color array.
+        osg::Vec4Array* colors = new osg::Vec4Array;
+        // add a white color, colors take the form r,g,b,a with 0.0 off, 1.0 full on.
+        colors->push_back(osg::Vec4(.0f,.0f,.0f,1.0f));
+        
+        // pass the color array to points geometry, note the binding to tell the geometry
+        // that only use one color for the whole object.
+        pointsGeom->setColorArray(colors);
+        pointsGeom->setColorBinding(osg::Geometry::BIND_OVERALL);
+        
+        
+        pointsGeom->setNormalArray(vertspointlocal);
+		pointsGeom->setNormalBinding(osg::Geometry::BIND_PER_VERTEX);
+
+		pointsGeom->getOrCreateStateSet()->setAttribute(new osg::Point(5.0f),osg::StateAttribute::ON);
+        // create and add a DrawArray Primitive (see include/osg/Primitive).  The first
+        // parameter passed to the DrawArrays constructor is the Primitive::Mode which
+        // in this case is POINTS (which has the same value GL_POINTS), the second
+        // parameter is the index position into the vertex array of the first point
+        // to draw, and the third parameter is the number of points to draw.
+        pointsGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POINTS,0,vertspointlocal->size()));
+        
+        
+        // add the points geometry to the geode.
+        geode->addDrawable(pointsGeom);
+
+	}
+
 
 	{
 		osg::ref_ptr<BoundingBoxCallback> bbcb = new BoundingBoxCallback;
@@ -676,6 +724,42 @@ osg::Geode* txFemSurf::CreateMesh()
 
 
 		geode->addDrawable(polyGeom);
+	}
+
+	{
+		osg::Vec3Array *vertstrilocal = new osg::Vec3Array;
+		osg::Vec3Array *vertsnormaltrilocal = new osg::Vec3Array;
+
+		for ( size_t i=0; i<ctria3index.size(); ++i ) {
+			xtIndexTria3 triIndex = ctria3index[i];
+			for ( int j=0; j<3; ++j ) {
+				xtVec3df vert = verts[triIndex.a[j]];
+				xtVec3df normal = vertsnormal[triIndex.a[j]];
+				vertstrilocal->push_back(osg::Vec3(vert.v[0],vert.v[1],vert.v[2]));
+				vertsnormaltrilocal->push_back(osg::Vec3(normal.v[0],normal.v[1],normal.v[2]));
+			}
+		}
+
+		osg::Geometry* trisGeom = new osg::Geometry();
+		//osg::Geometry *polyGeom = new osg::Geometry();
+
+		trisGeom->setVertexArray(vertstrilocal);
+
+		trisGeom->setColorArray(shared_colors.get());
+		trisGeom->setColorBinding(osg::Geometry::BIND_OVERALL);
+
+		//polyGeom->setNormalArray(shared_normals.get());
+		//polyGeom->setNormalBinding(osg::Geometry::BIND_OVERALL);
+		trisGeom->setNormalArray( vertsnormaltrilocal );
+		trisGeom->setNormalBinding( osg::Geometry::BIND_PER_VERTEX );
+
+
+		trisGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLES,0,vertstrilocal->size()));
+
+
+		geode->addDrawable(trisGeom);
+
+
 	}
 
 	{
