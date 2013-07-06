@@ -2,6 +2,7 @@
 //
 
 #include "stdafx.h"
+#include <Windows.h>
 #include <osg/Array>
 #include <osg/Geode>
 #include <osg/Vec3>
@@ -18,6 +19,11 @@
 #include <osgGA/TrackballManipulator>
 #include <osg/Math>
 #include <iostream>
+
+#include <osgWidget/Util>
+#include <osgWidget/WindowManager>
+#include <osgWidget/Box>
+#include <osgWidget/Label>
 
 #include "txFemSurf.h"
 
@@ -83,14 +89,154 @@ osg::Node *createScene()
 
 }
 
+// For now this is just an example, but osgWidget::Menu will later be it's own Window.
+// I just wanted to get this out there so that people could see it was possible.
+
+const unsigned int MASK_2D = 0xF0000000;
+const unsigned int MASK_3D = 0x0F000000;
+
+struct ColorLabel: public osgWidget::Label {
+    ColorLabel(const char* label):
+    osgWidget::Label("", "") {
+        setFont("fonts/Vera.ttf");
+        setFontSize(14);
+        setFontColor(1.0f, 1.0f, 1.0f, 1.0f);
+        setColor(0.3f, 0.3f, 0.3f, 1.0f);
+        addHeight(18.0f);
+        setCanFill(true);
+        setLabel(label);
+        setEventMask(osgWidget::EVENT_MOUSE_PUSH | osgWidget::EVENT_MASK_MOUSE_MOVE);
+    }
+
+    bool mousePush(double, double, const osgWidget::WindowManager*) {
+        return true;
+    }
+
+    bool mouseEnter(double, double, const osgWidget::WindowManager*) {
+        setColor(0.6f, 0.6f, 0.6f, 1.0f);
+        
+        return true;
+    }
+
+    bool mouseLeave(double, double, const osgWidget::WindowManager*) {
+        setColor(0.3f, 0.3f, 0.3f, 1.0f);
+        
+        return true;
+    }
+};
+
+class ColorLabelMenu: public ColorLabel {
+    osg::ref_ptr<osgWidget::Window> _window;
+
+public:
+    ColorLabelMenu(const char* label):
+    ColorLabel(label) {
+        _window = new osgWidget::Box(
+            std::string("Menu_") + label,
+            osgWidget::Box::VERTICAL,
+            true
+        );
+
+        _window->addWidget(new ColorLabel("Open Some Stuff"));
+        _window->addWidget(new ColorLabel("Do It Now"));
+        _window->addWidget(new ColorLabel("Hello, How Are U?"));
+        _window->addWidget(new ColorLabel("Hmmm..."));
+        _window->addWidget(new ColorLabel("Option 5"));
+
+        _window->resize();
+
+        setColor(0.8f, 0.8f, 0.8f, 0.8f);
+    }
+
+    void managed(osgWidget::WindowManager* wm) {
+        osgWidget::Label::managed(wm);
+
+        wm->addChild(_window.get());
+
+        _window->hide();
+    }
+
+    void positioned() {
+        osgWidget::Label::positioned();
+
+        _window->setOrigin(getX(), getHeight());
+        _window->resize(getWidth());
+    }
+
+    bool mousePush(double, double, const osgWidget::WindowManager*) {
+        if(!_window->isVisible()) _window->show();
+
+        else _window->hide();
+
+        return true;
+    }
+
+    bool mouseLeave(double, double, const osgWidget::WindowManager*) {
+        if(!_window->isVisible()) setColor(0.8f, 0.8f, 0.8f, 0.8f);
+
+        return true;
+    }
+};
+
+// Open Dialog
+char* OpenDialog()
+{
+	OPENFILENAME ofn;       // common dialog box structure
+	wchar_t szFile[260];       // buffer for file name
+	HWND hwnd;              // owner window
+	HANDLE hf;              // file handle
+
+	// Initialize OPENFILENAME
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = NULL;
+	ofn.lpstrFile = szFile;
+	// Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
+	// use the contents of szFile to initialize itself.
+	ofn.lpstrFile[0] = '\0';
+	ofn.nMaxFile = sizeof(szFile);
+	ofn.lpstrFilter = L"All\0*.*\0Text\0*.TXT\0";
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFileTitle = NULL;
+	ofn.nMaxFileTitle = 0;
+	ofn.lpstrInitialDir = NULL;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+	// Display the Open dialog box. 
+	char *filenamebuffer = new char[500];
+	filenamebuffer;
+	if (GetOpenFileName(&ofn)==TRUE) {
+		unsigned int converted = 0;
+		wcstombs_s(&converted,filenamebuffer,wcslen(szFile)+1,szFile,_TRUNCATE);
+	}
+		//hf = CreateFile(ofn.lpstrFile, 
+		//				GENERIC_READ,
+		//				0,
+		//				(LPSECURITY_ATTRIBUTES) NULL,
+		//				OPEN_EXISTING,
+		//				FILE_ATTRIBUTE_NORMAL,
+		//				(HANDLE) NULL);
+
+	return filenamebuffer;
+}
+
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+	char *filename = OpenDialog();
+	if ( !filename ) {
+		exit(0);
+	}
 	txFemSurf femsurf;
-	femsurf.LoadFemFile("arm.fem");
-
+	//femsurf.LoadFemFile("./fem/arm.fem");
+	//femsurf.LoadFemFile("./fem/sphere.fem");
+	//femsurf.LoadFemFile("./fem/5link_para_steering.fem");
+	//femsurf.LoadFemFile("./fem/velo.fem");
+	//femsurf.LoadFemFile("./fem/suspension_fim.fem");
+	
+	femsurf.LoadFemFile(filename);
 	osg::Group *root = new osg::Group;
-	root->addChild( createScene() );
+	//root->addChild( createScene() );
 	root->addChild( femsurf.CreateMesh() );
 
 	osgViewer::Viewer viewer;
@@ -98,6 +244,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	viewer.setSceneData( root );
 
 	viewer.setUpViewInWindow(400,400,640,480);
+
 
 	return viewer.run();
 

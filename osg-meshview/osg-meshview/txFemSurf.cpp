@@ -99,8 +99,25 @@ int ExtractGRID(const char* str, const int len, float &x, float &y, float &z)
 	x = (float)ConvertToFloat(gridxyzstr,0);
 	y = (float)ConvertToFloat(gridxyzstr,8);
 	z = (float)ConvertToFloat(gridxyzstr,16);
-	//printf("x:\t %f, y:\t %f, z:\t %f\n",x,y,z);
-	//map.insert(gridIndex,
+
+	char num[9];
+	num[8] = '\0';
+
+	strncpy(num,&str[8],8);
+	gridIndex = atoi(num);
+
+	strncpy(num,&str[24],8);
+	//sscanf(num,"%lf",&x);
+	x = atof(num);
+
+	strncpy(num,&str[32],8);
+	//sscanf(num,"%lf",&y);
+	y = atof(num);
+
+	strncpy(num,&str[40],8);
+	//sscanf(num,"%lf",&z);
+	z = atof(num);
+
 	return gridIndex;
 }
 
@@ -109,8 +126,20 @@ void ExtractTRIA3(const char* str, const int len, int &a, int &b, int &c)
 	char ctria3tokestr[20];
 	char ctria3indexstr[20];
 	char stria3opt[20];
-	sscanf(str,"%s %s %s %d %d %d", ctria3tokestr,ctria3indexstr,stria3opt,&a,&b,&c);
+	//sscanf(str,"%s %s %s %d %d %d", ctria3tokestr,ctria3indexstr,stria3opt,&a,&b,&c);
 	//printf("a:\t %d, b:\t %d, c:\t %d\n",a,b,c);
+	char num[9];
+	strncpy(num,&str[24],8);
+	num[8]='\0';
+	a = atoi(num);
+
+	strncpy(num,&str[32],8);
+	//num[8]='\0';
+	b = atoi(num);
+
+	strncpy(num,&str[40],8);
+	//num[8]='\0';
+	c = atoi(num);
 
 }
 
@@ -119,8 +148,25 @@ void ExtractCQUAD4(const char *str, const int len, int &a, int &b, int &c, int &
 	char cquad4tokestr[20];
 	char cquad4indexstr[20];
 	char cquad4opt[20];
-	sscanf(str,"%s %s %s %d %d %d %d", cquad4tokestr,cquad4indexstr,cquad4opt,&a,&b,&c,&d);
+	//sscanf(str,"%s %s %s %d %d %d %d", cquad4tokestr,cquad4indexstr,cquad4opt,&a,&b,&c,&d);
 	//printf("a:\t %d, b:\t %d, c:\t %d\n",a,b,c);
+	// fixed length
+	char num[9];
+	strncpy(num,&str[24],8);
+	num[8]='\0';
+	a = atoi(num);
+
+	strncpy(num,&str[32],8);
+	//num[8]='\0';
+	b = atoi(num);
+
+	strncpy(num,&str[40],8);
+	//num[8]='\0';
+	c = atoi(num);
+
+	strncpy(num,&str[48],8);
+	//num[8]='\0';
+	d = atoi(num);
 }
 
 
@@ -758,6 +804,63 @@ osg::Geode* txFemSurf::CreateMesh()
 
 
 		geode->addDrawable(trisGeom);
+
+
+	}
+
+	{
+		// create triangle mesh edge
+		osg::Vec3Array *vertstriedge = new osg::Vec3Array;
+		osg::Vec3Array *normtriedge = new osg::Vec3Array;
+
+		for ( size_t i=0; i<ctria3index.size(); ++i ) {
+			xtIndexTria3 triIndex = ctria3index[i];
+			for ( int j=0; j<3; ++j ) {
+				xtVec3df vert0 = verts[triIndex.a[j]];
+				xtVec3df normal0 = vertsnormal[triIndex.a[j]];
+				vertstriedge->push_back(osg::Vec3(vert0.v[0],vert0.v[1],vert0.v[2]));
+				normtriedge->push_back(osg::Vec3(normal0.v[0],normal0.v[1],normal0.v[2]));
+				xtVec3df vert1 = verts[triIndex.a[(j+1)%3]];
+				xtVec3df normal1 = vertsnormal[triIndex.a[(j+1)%3]];
+				vertstriedge->push_back(osg::Vec3(vert1.v[0],vert1.v[1],vert1.v[2]));
+				normtriedge->push_back(osg::Vec3(normal1.v[0],normal1.v[1],normal1.v[2]));
+			}
+		}
+
+		osg::Geometry* trilinesGeom = new osg::Geometry();
+
+		// pass the created vertex array to the points geometry object.
+        trilinesGeom->setVertexArray(vertstriedge);
+
+		// set the line width
+		osg::StateSet *stateset = new osg::StateSet;
+		osg::LineWidth *linewidth = new osg::LineWidth;
+		linewidth->setWidth(4.0f);
+		stateset->setAttributeAndModes(linewidth,osg::StateAttribute::ON);
+		stateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
+		trilinesGeom->setStateSet(stateset);
+        
+        // set the colors as before, plus using the above
+        osg::Vec4Array* colors = new osg::Vec4Array;
+        colors->push_back(osg::Vec4(0.0f,1.0f,0.0f,1.0f));
+        trilinesGeom->setColorArray(colors);
+        trilinesGeom->setColorBinding(osg::Geometry::BIND_OVERALL);
+        
+
+        // set the normal in the same way color.
+        //osg::Vec3Array* normals = new osg::Vec3Array;
+        //normals->push_back(osg::Vec3(0.0f,-1.0f,0.0f));
+        trilinesGeom->setNormalArray(normtriedge);
+        trilinesGeom->setNormalBinding(osg::Geometry::BIND_PER_VERTEX);
+        
+
+        // This time we simply use primitive, and hardwire the number of coords to use 
+        // since we know up front,
+		trilinesGeom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES,0,vertstriedge->size()));
+        
+        
+        // add the points geometry to the geode.
+        geode->addDrawable(trilinesGeom);
 
 
 	}
