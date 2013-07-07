@@ -25,6 +25,9 @@
 #include <osgWidget/Box>
 #include <osgWidget/Label>
 
+#include "../buildpyramidGeometry/xtCreateHUD.h"
+#include "../buildpyramidGeometry/xtPickHandler.h"
+
 #include "txFemSurf.h"
 
 osg::Node *createScene()
@@ -208,6 +211,8 @@ char* OpenDialog()
 	if (GetOpenFileName(&ofn)==TRUE) {
 		unsigned int converted = 0;
 		wcstombs_s(&converted,filenamebuffer,wcslen(szFile)+1,szFile,_TRUNCATE);
+	} else {
+		return NULL;
 	}
 		//hf = CreateFile(ofn.lpstrFile, 
 		//				GENERIC_READ,
@@ -227,6 +232,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	if ( !filename ) {
 		exit(0);
 	}
+	osg::ref_ptr<osgText::Text> updateText = new osgText::Text;
 	txFemSurf femsurf;
 	//femsurf.LoadFemFile("./fem/arm.fem");
 	//femsurf.LoadFemFile("./fem/sphere.fem");
@@ -238,12 +244,14 @@ int _tmain(int argc, _TCHAR* argv[])
 	osg::Group *root = new osg::Group;
 	//root->addChild( createScene() );
 	root->addChild( femsurf.CreateMesh() );
+	root->addChild( createHUD(updateText.get()) );
 
 	osgViewer::Viewer viewer;
+	
 
 	viewer.setSceneData( root );
-
-	viewer.setUpViewInWindow(400,400,640,480);
+	viewer.setUpViewInWindow(20,20,1048,960);
+	viewer.addEventHandler(new PickHandler(updateText.get()));
 
 
 	return viewer.run();

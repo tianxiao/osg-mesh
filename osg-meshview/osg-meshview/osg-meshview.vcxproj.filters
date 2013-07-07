@@ -30,6 +30,15 @@
     <ClInclude Include="xtVec3d.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\buildpyramidGeometry\osgcommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\buildpyramidGeometry\xtCreateHUD.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\buildpyramidGeometry\xtPickHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -42,6 +51,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="xtVec3d.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\buildpyramidGeometry\xtCreateHUD.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\buildpyramidGeometry\xtPickHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
