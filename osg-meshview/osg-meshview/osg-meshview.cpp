@@ -29,6 +29,7 @@
 #include "../buildpyramidGeometry/xtPickHandler.h"
 
 #include "txFemSurf.h"
+#include "xtOctreeScene.h"
 
 osg::Node *createScene()
 {
@@ -248,7 +249,11 @@ int _tmain(int argc, _TCHAR* argv[])
 	osg::Group *root = new osg::Group;
 	//root->addChild( createScene() );
 	//root->addChild( femsurf.CreateMesh() );
-	root->addChild( CreateFemGraph() );
+	//root->addChild( CreateFemGraph() );
+
+	xtOctreeScene octreescene;
+	root->addChild( octreescene.CreateOctreeScene() );
+
 	root->addChild( createHUD(updateText.get()) );
 
 	osgViewer::Viewer viewer;

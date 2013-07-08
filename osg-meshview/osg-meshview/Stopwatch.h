@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef _WIN32
 #include <sys/time.h>
 
@@ -11,7 +13,7 @@ double stopwatch()
 #else
 
 #include <windows.h>
-double stopwatch() 
+inline double stopwatch() 
 {
 	unsigned long long ticks;
 	unsigned long long ticks_per_sec;
