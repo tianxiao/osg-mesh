@@ -225,32 +225,37 @@ char* OpenDialog()
 	return filenamebuffer;
 }
 
-
-int _tmain(int argc, _TCHAR* argv[])
+osg::Geode* CreateFemGraph()
 {
+	//osg::ref_ptr<txFemSurf> ref_femsurf = new txFemSurf;
+	txFemSurf *pfemsurf = new txFemSurf;
 	char *filename = OpenDialog();
 	if ( !filename ) {
 		exit(0);
 	}
+	pfemsurf->LoadFemFile(filename);
+
+	return pfemsurf->CreateMesh();
+}
+
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+
 	osg::ref_ptr<osgText::Text> updateText = new osgText::Text;
 	txFemSurf femsurf;
-	//femsurf.LoadFemFile("./fem/arm.fem");
-	//femsurf.LoadFemFile("./fem/sphere.fem");
-	//femsurf.LoadFemFile("./fem/5link_para_steering.fem");
-	//femsurf.LoadFemFile("./fem/velo.fem");
-	//femsurf.LoadFemFile("./fem/suspension_fim.fem");
-	
-	femsurf.LoadFemFile(filename);
+
 	osg::Group *root = new osg::Group;
 	//root->addChild( createScene() );
-	root->addChild( femsurf.CreateMesh() );
+	//root->addChild( femsurf.CreateMesh() );
+	root->addChild( CreateFemGraph() );
 	root->addChild( createHUD(updateText.get()) );
 
 	osgViewer::Viewer viewer;
 	
 
 	viewer.setSceneData( root );
-	viewer.setUpViewInWindow(20,20,1048,960);
+	viewer.setUpViewInWindow(20,20,960,640);
 	viewer.addEventHandler(new PickHandler(updateText.get()));
 
 
