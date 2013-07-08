@@ -18,13 +18,13 @@ public:
 	~xtOctreeScene(void);
 
 
-
-
-
 	osg::Geode* CreateOctreeScene();
 
 
 private:
+	void DestroyMem();
+
+
 	// method to generate the scene
 	float rand11() // Random number between [-1,1]
 	{ return -1.f + (2.f*rand()) * (1.f / RAND_MAX); }
@@ -49,7 +49,9 @@ private:
 		octree = new Octree(Vec3(0,0,0), Vec3(1,1,1));
 
 		// Create a bunch of random points
-		const int nPoints = 1 * 1000 * 1000;
+		//const int nPoints = 1 * 1000 * 1000;
+		//const int nPoints = 1 * 100 * 100;
+		const int nPoints = 1 * 10 * 10;
 		for(int i=0; i<nPoints; ++i) {
 			points.push_back(randVec3());
 		}
@@ -73,8 +75,14 @@ private:
 		// Remember: In the case where the query is relatively close
 		// to the size of the whole octree space, the octree will
 		// actually be a good bit slower than brute forcing every point!
+
+
+		FillLeafBox(this->leafboxList,this->octree);
 	}
 
+public:
+	// recusive function to get all the leaf box;
+	static void FillLeafBox(std::vector<osg::Box *> &leafboxList, Octree *root);
 
 private:
 	// Used for testing
@@ -82,7 +90,11 @@ private:
 	Octree *octree;
 	OctreePoint *octreePoints;
 	Vec3 qmin, qmax;
+
+	std::vector<osg::Box *> leafboxList;
 };
+
+osg::Geode*  CreateOctreeSceneS(OctreePoint *octreePoints, const int nPnts,std::vector<osg::Box *> &leafboxList);
 
 
 

@@ -30,6 +30,13 @@ namespace brandonpelfrey {
 				z:      - + - + - + - +
 		 */
 
+
+	public:
+		// query API
+		Vec3 GetOctreeCenter() { return origin; };
+		Vec3 GetHalfExtension() { return halfDimension; };
+		Octree **GetChildren() { return children; };
+
 		public:
 		Octree(const Vec3& origin, const Vec3& halfDimension) 
 			: origin(origin), halfDimension(halfDimension), data(NULL) {

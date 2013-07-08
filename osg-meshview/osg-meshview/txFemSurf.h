@@ -46,6 +46,7 @@ namespace osg
 
 class txFemSurf
 {
+	friend class xtFemsurfOctreeScene;
 public:
 	txFemSurf(void);
 
@@ -61,6 +62,7 @@ public:
 	osg::Geode* CreateMesh();
 
 private:
+	//void CalculateBBox();
 	void FillVC3C4(std::vector<xtVec3df> &tempverts,
 		std::vector<int> &tempctria3, std::vector<int> &tempcquad4);
 	void CalculateFaceNormal();

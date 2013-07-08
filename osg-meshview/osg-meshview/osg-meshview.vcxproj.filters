@@ -54,6 +54,12 @@
     <ClInclude Include="xtOctreeScene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="xtFemsurfOctreeScene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xtWinGUIUtil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -75,6 +81,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="xtOctreeScene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtFemsurfOctreeScene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtWinGUIUtil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -13,10 +13,32 @@ public:
 
 	~xtVec3d(void) {};
 
+	xtVec3d Min(const xtVec3d &r) {
+		xtVec3d rnt;
+		for ( int i=0; i<3; ++i ) {
+			rnt.v[i] = v[i]<r.v[i]?v[i]:r.v[i];
+		}
+		return rnt;
+	}
+
+	xtVec3d Max(const xtVec3d &r) {
+		xtVec3d rnt;
+		for ( int i=0; i<3; ++i ) {
+			rnt.v[i] = v[i]>r.v[i]?v[i]:r.v[i];
+		}
+		return rnt;
+	}
+
 	void CrossProduct(const xtVec3d &r, xtVec3d &out) {
 		out.v[0] = v[1]*r.v[2] - v[2]*r.v[1];
 		out.v[1] = v[2]*r.v[0] - v[0]*r.v[2];
 		out.v[2] = v[0]*r.v[1] - v[1]*r.v[0];
+	}
+
+	void SetXYZ(T x, T y, T z) {
+		v[0] = x;
+		v[1] = y;
+		v[2] = z;
 	}
 
 	void Zero() {
@@ -35,7 +57,7 @@ public:
 		v[2]/=len;
 	}
 
-	void Scale(const double s) {
+	void Scale(const T s) {
 		for ( int i=0; i<3; ++i ) {
 			v[i] = v[i]/s;
 		}
@@ -59,11 +81,12 @@ public:
 		return rlt;
 	}
 
-	xtVec3d operator/(const double s) {
-		xtVec3d rlt;
+	xtVec3d<T> operator/(const T s) {
+		xtVec3d<T> rlt;
 		for ( int i=0; i<3; ++i ) {
-			rlt[i] = v[i]/s;
+			rlt.v[i] = v[i]/s;
 		}
+		return rlt;
 	}
 
 public:

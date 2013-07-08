@@ -88,8 +88,10 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="txFemSurf.h" />
     <ClInclude Include="Vec3.h" />
+    <ClInclude Include="xtFemsurfOctreeScene.h" />
     <ClInclude Include="xtOctreeScene.h" />
     <ClInclude Include="xtVec3d.h" />
+    <ClInclude Include="xtWinGUIUtil.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\buildpyramidGeometry\xtCreateHUD.cpp" />
@@ -100,8 +102,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="txFemSurf.cpp" />
+    <ClCompile Include="xtFemsurfOctreeScene.cpp" />
     <ClCompile Include="xtOctreeScene.cpp" />
     <ClCompile Include="xtVec3d.cpp" />
+    <ClCompile Include="xtWinGUIUtil.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

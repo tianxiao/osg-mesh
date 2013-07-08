@@ -281,6 +281,8 @@ void txFemSurf::FillVC3C4(std::vector<xtVec3df> &tempverts,
 		xtIndexCquad4 temcquad4(a,b,c,d);
 		cquad4index.push_back(temcquad4);
 	}
+
+	this->CalculateBBox();
 }
 
 void txFemSurf::RequireNormal() 
@@ -329,10 +331,18 @@ void txFemSurf::RequireNormal()
 
 void txFemSurf::CalculateBBox()
 {
+	assert(verts.size());
 	xtVec3df min, max;
+	min = verts[0];
+	max = min;
 	for ( size_t i=0; i<verts.size(); ++i ) {
-		
+		min = min.Min(verts[i]);
+		max = max.Max(verts[i]);
 	}
+
+	this->bbox.center = (min+max)/2.;
+	// already have been half extend
+	this->bbox.extend = (max-min)/2.;
 }
 
 void txFemSurf::CalculateFaceNormal()
@@ -933,6 +943,14 @@ osg::Geode* txFemSurf::CreateMesh()
         geode->addDrawable(linesGeom);
 
 	}
+
+	osg::BoundingBox osgbbx = geode->getBoundingBox();
+
+	//bbox.center = xtVec3df(osgbbx.center().x,osgbbx.center().y,osgbbx.center().z);
+	//osg::Vec3f center = osgbbx.center();
+	//osg::Vec3f extend = osgbbx._max-osgbbx._min;
+	//bbox.center.SetXYZ(center.x(),center.y(),center.z());
+	//bbox.extend.SetXYZ(extend.x(),extend.y(),extend.z());
 
 	return geode;
 }
