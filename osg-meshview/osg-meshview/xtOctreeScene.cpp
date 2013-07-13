@@ -60,6 +60,10 @@ osg::Geode*  CreateOctreeSceneS(OctreePoint *octreePoints, const int nPnts,std::
 	{
 		osg::StateSet *state2 = new osg::StateSet();
 		state2->setAttribute( new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE ));
+		// The following code i try to transparent. failed!
+		//state2->setMode(GL_BLEND,osg::StateAttribute::ON);
+		//state2->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+		//state2->setren
 		for ( size_t i=0; i<leafboxList.size(); ++i ) {
 			geode->addDrawable(new osg::ShapeDrawable(leafboxList[i]));
 		}
