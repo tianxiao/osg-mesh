@@ -64,6 +64,7 @@ struct xtPnt3Adapter
 
 class xtOctreeAdapter
 {
+	friend class mxtOctreeScene;
 public:
 	xtOctreeAdapter(void);
 	~xtOctreeAdapter(void);

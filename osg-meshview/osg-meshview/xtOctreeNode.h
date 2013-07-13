@@ -15,6 +15,15 @@ struct xtPnt3
 		return tem;
 	}
 
+	xtPnt3 operator-( xtPnt3 &lhs ) 
+	{
+		xtPnt3 tem;
+		tem.x = x-lhs.x;
+		tem.y = y-lhs.y;
+		tem.z = z-lhs.z;
+		return tem;
+	}
+
 	xtPnt3 Half() {
 		xtPnt3 temp;
 		temp.x = x/2;
@@ -74,7 +83,10 @@ public:
 		this->mParent = parent;
 		this->mDepth = depth;
 		this->mChild = NULL;
-		this->mState = OCTPARTIAL;
+		// Initial should be empty 
+		// until it been checked!
+		//this->mState = OCTPARTIAL;
+		this->mState = OCTEMPTY;
 	}
 
 	void SetNode(xtPnt3<T> &lb, xtPnt3<T> &rt) 

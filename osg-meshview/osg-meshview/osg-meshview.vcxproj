@@ -81,6 +81,7 @@
     <ClInclude Include="..\buildpyramidGeometry\osgcommon.h" />
     <ClInclude Include="..\buildpyramidGeometry\xtCreateHUD.h" />
     <ClInclude Include="..\buildpyramidGeometry\xtPickHandler.h" />
+    <ClInclude Include="mxtOctreeScene.h" />
     <ClInclude Include="Octree.h" />
     <ClInclude Include="OctreePoint.h" />
     <ClInclude Include="stdafx.h" />
@@ -89,6 +90,9 @@
     <ClInclude Include="txFemSurf.h" />
     <ClInclude Include="Vec3.h" />
     <ClInclude Include="xtFemsurfOctreeScene.h" />
+    <ClInclude Include="xtOctree.h" />
+    <ClInclude Include="xtOctreeAdapter.h" />
+    <ClInclude Include="xtOctreeNode.h" />
     <ClInclude Include="xtOctreeScene.h" />
     <ClInclude Include="xtVec3d.h" />
     <ClInclude Include="xtWinGUIUtil.h" />
@@ -96,6 +100,7 @@
   <ItemGroup>
     <ClCompile Include="..\buildpyramidGeometry\xtCreateHUD.cpp" />
     <ClCompile Include="..\buildpyramidGeometry\xtPickHandler.cpp" />
+    <ClCompile Include="mxtOctreeScene.cpp" />
     <ClCompile Include="osg-meshview.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -103,6 +108,9 @@
     </ClCompile>
     <ClCompile Include="txFemSurf.cpp" />
     <ClCompile Include="xtFemsurfOctreeScene.cpp" />
+    <ClCompile Include="xtOctree.cpp" />
+    <ClCompile Include="xtOctreeAdapter.cpp" />
+    <ClCompile Include="xtOctreeNode.cpp" />
     <ClCompile Include="xtOctreeScene.cpp" />
     <ClCompile Include="xtVec3d.cpp" />
     <ClCompile Include="xtWinGUIUtil.cpp" />

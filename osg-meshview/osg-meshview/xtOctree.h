@@ -43,7 +43,7 @@ public:
 			xtOctreeNode<T> *currentnode = nodequeue.front();
 			nodequeue.pop();
 
-			if ( currentnode->mDepth == level ) {
+			if ( currentnode->mDepth == level && currentnode->mState == OCTPARTIAL) {
 				levelnodelist.push_back( currentnode );
 			} else if ( currentnode->mDepth < level ) {
 				if ( currentnode->mChild ) {
@@ -59,6 +59,7 @@ private:
 	void InsertPoint(double pnt[], xtOctreeNode<T> *root) 
 	{
 		if ( IsDoublePntInCubeT(pnt, root) ) {
+			root->mState = OCTPARTIAL;
 			if ( root->mDepth == this->mLargestDepth ) {
 				root->mState = OCTPARTIAL;
 			} else {
@@ -70,18 +71,38 @@ private:
 					InsertPoint(pnt,&(root->mChild[i]));
 				}
 			}
+			//return;
+		} else {
+			// bug fixed
+			// This branch will cause a overlapping. The checked at one point
+			// the other point who don't overlap will set this point to empty!
+			//root->mState = OCTEMPTY;
 		}
+		
 	}
 
-	bool IsDoublePntInCubeT(double pnt[], xtOctreeNode<T> *root)
+	static bool IsPointCubeOverlap(double p[], double min[], double max[])
 	{
 		for ( int i=0; i<3; ++i ) {
-			if ( (&(root->mLB.x))[i]>pnt[i] ||
-				(&(root->mRT.x))[i]<pnt[i])
+			if ( min[i]>p[i] ||
+				 max[i]<p[i] )
 				return false;
 		}
 
 		return true;
+	}
+
+	// becarefull the offset!!!
+	bool IsDoublePntInCubeT(double pnt[], xtOctreeNode<T> *root)
+	{
+
+		xtPnt3<int> cubMin = root->mLB + this->mCenter;
+		xtPnt3<int> cubMax = root->mRT + this->mCenter;
+
+		double dcubMin[3] = {(double)cubMin.x,(double)cubMin.y,(double)cubMin.z};
+		double dcubMax[3] = {(double)cubMax.x,(double)cubMax.y,(double)cubMax.z};
+		
+		return IsPointCubeOverlap(pnt,dcubMin,dcubMax);
 	}
 
 

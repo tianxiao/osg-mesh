@@ -60,6 +60,18 @@
     <ClInclude Include="xtWinGUIUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="xtOctree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xtOctreeAdapter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xtOctreeNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mxtOctreeScene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -87,6 +99,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="xtWinGUIUtil.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtOctree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtOctreeAdapter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtOctreeNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mxtOctreeScene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

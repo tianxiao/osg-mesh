@@ -47,6 +47,7 @@ namespace osg
 class txFemSurf
 {
 	friend class xtFemsurfOctreeScene;
+	friend class mxtOctreeScene;
 public:
 	txFemSurf(void);
 

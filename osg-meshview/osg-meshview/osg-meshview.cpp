@@ -33,6 +33,8 @@
 #include "xtWinGUIUtil.h"
 #include "xtFemsurfOctreeScene.h"
 
+#include "mxtOctreeScene.h"
+
 
 osg::Node *createScene()
 {
@@ -208,6 +210,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	txFemSurf femsurf;
 
 	osg::Group *root = new osg::Group;
+	osgViewer::CompositeViewer comViewer;
 	//root->addChild( createScene() );
 	//root->addChild( femsurf.CreateMesh() );
 	//root->addChild( CreateFemGraph() );
@@ -215,22 +218,93 @@ int _tmain(int argc, _TCHAR* argv[])
 	//xtOctreeScene octreescene;
 	//root->addChild( octreescene.CreateOctreeScene() );
 
+	/*****
 	xtFemsurfOctreeScene femOctScene;
 	femOctScene.LoadFemSurf();
 	root->addChild( femOctScene.CreateScene() );
+	*****/
+
+
+	mxtOctreeScene myOctreeScene;
+	myOctreeScene.LodaFemSurfData();
+	myOctreeScene.SetResolution(0.1);
+	myOctreeScene.BuildOctree();
+
+	std::vector<xtOctreeNode<int> *> dumplevel;
+	myOctreeScene.GetDumpLevelNodeList(4,dumplevel);
+	root->addChild( myOctreeScene.CreatemOctreeScene(dumplevel) );
+
+	osg::Group *root3 = new osg::Group;
+	{
+	std::vector<xtOctreeNode<int> *> dumplevel;
+	myOctreeScene.GetDumpLevelNodeList(3,dumplevel);
+	root3->addChild( myOctreeScene.CreatemOctreeScene(dumplevel) );
+	}
+	osg::Group *root4 = new osg::Group;
+	{
+	std::vector<xtOctreeNode<int> *> dumplevel;
+	myOctreeScene.GetDumpLevelNodeList(2,dumplevel);
+	root3->addChild( myOctreeScene.CreatemOctreeScene(dumplevel) );
+	}
+	osg::Group *root5 = new osg::Group;
+	{
+	std::vector<xtOctreeNode<int> *> dumplevel;
+	myOctreeScene.GetDumpLevelNodeList(1,dumplevel);
+	root3->addChild( myOctreeScene.CreatemOctreeScene(dumplevel) );
+	}
+	osg::Group *root6 = new osg::Group;
+	{
+	std::vector<xtOctreeNode<int> *> dumplevel;
+	myOctreeScene.GetDumpLevelNodeList(0,dumplevel);
+	root3->addChild( myOctreeScene.CreatemOctreeScene(dumplevel) );
+	}
+
+	{
+		// add original surface
+		root3->addChild( myOctreeScene.GetFemSurfGeom() );
+	}
+
+	{
+		osgViewer::View *viewer3 = new osgViewer::View;
+	
+		viewer3->setSceneData( root3 );
+		viewer3->setUpViewInWindow(20,20,960,640);
+
+		comViewer.addView(viewer3);
+	}
+
+	/****
+	{
+		osgViewer::View *viewer4 = new osgViewer::View;
+	
+		viewer4->setSceneData( root4 );
+		viewer4->setUpViewInWindow(20,20,960,640);
+
+		comViewer.addView(viewer4);
+	}
+
+	{
+		osgViewer::View *view5 = new osgViewer::View;
+	
+		view5->setSceneData( root5 );
+		view5->setUpViewInWindow(20,20,960,640);
+
+		comViewer.addView(view5);
+	}
+	****/
 
 	root->addChild( createHUD(updateText.get()) );
 
 	osgViewer::Viewer viewer;
 	
-
 	viewer.setSceneData( root );
-	viewer.setUpViewInWindow(20,20,960,640);
+	viewer.setUpViewInWindow(200,200,960,640);
 	viewer.addEventHandler(new PickHandler(updateText.get()));
 
+	//return viewer.run();
+	comViewer.addView(&viewer);
 
-	return viewer.run();
+	return comViewer.run();
 
-	return 0;
 }
 
