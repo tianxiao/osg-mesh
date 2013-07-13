@@ -106,7 +106,7 @@ osg::Geode *mxtOctreeScene::CreatemOctreeScene(std::vector<xtOctreeNode<int> *> 
 	}
 
 	for ( size_t i=0; i<mDumpLevelNodelist.size(); ++i ) {
-		xtPnt3<int> center = mCubeCenter + (mDumpLevelNodelist[i]->mLB + mDumpLevelNodelist[i]->mRT).Half();
+		xtPnt3<int> center = mCubeCenter + (mDumpLevelNodelist[i]->mLB + mDumpLevelNodelist[i]->mRT);//.Half();
 		xtPnt3<int> extend = (mDumpLevelNodelist[i]->mRT - mDumpLevelNodelist[i]->mLB).Half();
 		osg::Vec3 osgcenter(center.x,center.y,center.z);
 		osg::Vec3 osgextend(extend.x,extend.y,extend.z);
