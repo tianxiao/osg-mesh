@@ -105,41 +105,41 @@ public:
 
 		// split this into 8 cube
 		xtPnt3<T> p0,p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12;
-
+		// 0
 		p0 = (mLB+mRT).Half();
 		mChild[0].mLB = mLB;
 		mChild[0].mRT = p0;
-
+		// 1
 		p7.Set(mLB.x,mLB.y,p0.z);
 		p8.Set(p0.x,p0.y,mRT.z);
 		mChild[1].mLB = p7;
 		mChild[1].mRT = p8;
-
+		// 2
 		p1.Set(mLB.x,p0.y,mLB.z);
 		p4.Set(p0.x,mRT.y,p0.z);
 		mChild[2].mLB = p1;
 		mChild[2].mRT = p4;
-
+		// 3
 		p9.Set(p1.x,p1.y,p0.z);
 		p10.Set(p4.x,p4.y,mRT.z);
 		mChild[3].mLB = p9;
 		mChild[3].mRT = p10;
-
+		// 4
 		p2.Set(p0.x,mLB.y,mLB.z);
 		p6.Set(mRT.x,p0.y,p0.z);
 		mChild[4].mLB = p2;
 		mChild[4].mRT = p6;
-
+		// 5
 		p11.Set(p2.x,p2.y,p0.z);
-		p12.Set(p6.x,p6.z,mRT.z);
+		p12.Set(p6.x,p6.y,mRT.z);
 		mChild[5].mLB = p11;
 		mChild[5].mRT = p12;
-
+		// 6
 		p3.Set(p0.x,p0.y,mLB.z);
 		p5.Set(mRT.x,mRT.y,p0.z);
 		mChild[6].mLB = p3;
 		mChild[6].mRT = p5;
-
+		// 7
 		mChild[7].mLB = p0;
 		mChild[7].mRT = mRT;
 

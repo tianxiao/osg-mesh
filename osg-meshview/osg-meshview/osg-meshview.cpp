@@ -228,7 +228,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	mxtOctreeScene myOctreeScene;
 	myOctreeScene.LodaFemSurfData();
 	myOctreeScene.SetResolution(0.1);
+
 	myOctreeScene.BuildOctree();
+	int largestdepth = myOctreeScene.GetLargestDepth();
 
 	std::vector<xtOctreeNode<int> *> dumplevel;
 	myOctreeScene.GetDumpLevelNodeList(4,dumplevel);
@@ -238,7 +240,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 	std::vector<xtOctreeNode<int> *> dumplevel;
 	myOctreeScene.GetDumpLevelNodeList(3,dumplevel);
-	root3->addChild( myOctreeScene.CreatemOctreeScene(dumplevel) );
+	root3->addChild( myOctreeScene.CreatemOctreeScene(dumplevel,false) );
 	}
 	osg::Group *root4 = new osg::Group;
 	{
@@ -249,8 +251,10 @@ int _tmain(int argc, _TCHAR* argv[])
 	osg::Group *root5 = new osg::Group;
 	{
 	std::vector<xtOctreeNode<int> *> dumplevel;
-	myOctreeScene.GetDumpLevelNodeList(1,dumplevel);
-	root3->addChild( myOctreeScene.CreatemOctreeScene(dumplevel) );
+	myOctreeScene.GetDumpLevelNodeList(4,dumplevel);
+	osg::Geode *geode = myOctreeScene.CreatemOctreeScene(dumplevel,false);
+	root3->addChild( geode );
+	root5->addChild( geode );
 	}
 	osg::Group *root6 = new osg::Group;
 	{
@@ -273,7 +277,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		comViewer.addView(viewer3);
 	}
 
-	/****
+	
 	{
 		osgViewer::View *viewer4 = new osgViewer::View;
 	
@@ -291,7 +295,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 		comViewer.addView(view5);
 	}
-	****/
+	
 
 	root->addChild( createHUD(updateText.get()) );
 

@@ -10,6 +10,8 @@ public:
 	mxtOctreeScene(void);
 	~mxtOctreeScene(void);
 
+	int GetLargestDepth() { return mLargestDepth; };
+
 	void LodaFemSurfData();
 	void SetResolution(double x) { this->mResolution = x; } ;
 
