@@ -3,6 +3,8 @@
 #include <vector>
 #include <queue>
 
+#include "xtTriangleBox3Overlap.h"
+
 template<typename T>
 class xtOctree
 {
@@ -34,6 +36,11 @@ public:
 		InsertPoint(pnt,this->mRoot);
 	}
 
+	void InsertTriangle( double p0[], double p1[], double p2[] )
+	{
+		InsertTriangle( p0, p1, p2, this->mRoot );
+	}
+
 	void DumpLevel(unsigned int level, std::vector<xtOctreeNode<T> *> &levelnodelist)
 	{
 		std::queue<xtOctreeNode<T> *> nodequeue;
@@ -56,6 +63,8 @@ public:
 	}
 
 private:
+	//void InsertElement
+
 	void InsertPoint(double pnt[], xtOctreeNode<T> *root) 
 	{
 		if ( IsDoublePntInCubeT(pnt, root) ) {
@@ -81,6 +90,30 @@ private:
 		
 	}
 
+	void InsertTriangle(double p0[], double p1[], double p2[], xtOctreeNode<T> *root )
+	{
+		if ( IsTriangleInCubeT(p0,p1,p2, root) ) {
+			root->mState = OCTPARTIAL;
+			if ( root->mDepth == this->mLargestDepth ) {
+				root->mState = OCTPARTIAL;
+			} else {
+				if ( !root->mChild ) {
+					root->AddChild(this->mLargestDepth);
+				}
+
+				for ( int i=0; i<8; ++i ) {
+					InsertTriangle(p0,p1,p2,&(root->mChild[i]));
+				}
+			}
+			//return;
+		} else {
+			// bug fixed
+			// This branch will cause a overlapping. The checked at one point
+			// the other point who don't overlap will set this point to empty!
+			//root->mState = OCTEMPTY;
+		}
+	}
+
 	static bool IsPointCubeOverlap(double p[], double min[], double max[])
 	{
 		for ( int i=0; i<3; ++i ) {
@@ -92,10 +125,24 @@ private:
 		return true;
 	}
 
+	static bool IsTriangleCubeOverlap( double p0[], double p1[], double p2[], double min[], double max[] ) 
+	{
+		float tri[3][3] = {
+			{(float) p0[0], (float) p0[1], (float) p0[2], },
+			{(float) p1[0], (float) p1[1], (float) p1[2], },
+			{(float) p2[0], (float) p2[1], (float) p2[2], }
+		};
+
+		float boxcenter[3] = { (float)(min[0]+max[0])/2.,(float)(min[1]+max[1])/2.,(float)(min[2]+max[2])/2. };
+		float boxhalfsize[3] = { (float)(-min[0]+max[0])/2.,(float)(-min[1]+max[1])/2.,(float)(-min[2]+max[2])/2. };
+
+		return 1==triBoxOverlap(boxcenter,boxhalfsize,tri);
+	}
+
 	// becarefull the offset!!!
 	bool IsDoublePntInCubeT(double pnt[], xtOctreeNode<T> *root)
 	{
-
+		// code should be extract as function!!!
 		xtPnt3<int> cubMin = root->mLB + this->mCenter;
 		xtPnt3<int> cubMax = root->mRT + this->mCenter;
 
@@ -103,6 +150,17 @@ private:
 		double dcubMax[3] = {(double)cubMax.x,(double)cubMax.y,(double)cubMax.z};
 		
 		return IsPointCubeOverlap(pnt,dcubMin,dcubMax);
+	}
+
+	bool IsTriangleInCubeT(double p0[], double p1[], double p2[], xtOctreeNode<T> *root ) 
+	{
+		xtPnt3<int> cubMin = root->mLB + this->mCenter;
+		xtPnt3<int> cubMax = root->mRT + this->mCenter;
+
+		double dcubMin[3] = {(double)cubMin.x,(double)cubMin.y,(double)cubMin.z};
+		double dcubMax[3] = {(double)cubMax.x,(double)cubMax.y,(double)cubMax.z};
+	
+		return IsTriangleCubeOverlap(p0,p1,p2,dcubMin, dcubMax);
 	}
 
 

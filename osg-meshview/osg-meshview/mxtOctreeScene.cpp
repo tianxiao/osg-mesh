@@ -61,6 +61,32 @@ void mxtOctreeScene::BuildOctree()
 		mOctree->InsertPoint(&(points[i].x));
 	}
 
+	// Insert triangle
+	for ( size_t i=0; i<femsurf->ctria3index.size(); ++i ) {
+		xtIndexTria3 currTria3 = femsurf->ctria3index[i];
+		mOctree->InsertTriangle(
+			&(points[currTria3.a[0]].x),
+			&(points[currTria3.a[1]].x),
+			&(points[currTria3.a[2]].x));
+	}
+
+	// Insert quad
+	for ( size_t i=0; i<femsurf->cquad4index.size(); ++i ) {
+		xtIndexCquad4 currquad4 = femsurf->cquad4index[i];
+		xtIndexTria3 currTria31(currquad4.a[0],currquad4.a[1],currquad4.a[2]);
+		xtIndexTria3 currTria32(currquad4.a[0],currquad4.a[2],currquad4.a[3]);
+
+		mOctree->InsertTriangle(
+			&(points[currTria31.a[0]].x),
+			&(points[currTria31.a[1]].x),
+			&(points[currTria31.a[2]].x));
+
+		mOctree->InsertTriangle(
+			&(points[currTria32.a[0]].x),
+			&(points[currTria32.a[1]].x),
+			&(points[currTria32.a[2]].x));
+	}
+
 }
 
 osg::Geode *mxtOctreeScene::GetFemSurfGeom()

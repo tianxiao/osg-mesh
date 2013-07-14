@@ -233,8 +233,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	int largestdepth = myOctreeScene.GetLargestDepth();
 
 	std::vector<xtOctreeNode<int> *> dumplevel;
-	myOctreeScene.GetDumpLevelNodeList(4,dumplevel);
-	root->addChild( myOctreeScene.CreatemOctreeScene(dumplevel) );
+	myOctreeScene.GetDumpLevelNodeList(8,dumplevel);
+	root->addChild( myOctreeScene.CreatemOctreeScene(dumplevel,false) );
 
 	osg::Group *root3 = new osg::Group;
 	{

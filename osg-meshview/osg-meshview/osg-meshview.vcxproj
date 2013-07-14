@@ -94,6 +94,7 @@
     <ClInclude Include="xtOctreeAdapter.h" />
     <ClInclude Include="xtOctreeNode.h" />
     <ClInclude Include="xtOctreeScene.h" />
+    <ClInclude Include="xtTriangleBox3Overlap.h" />
     <ClInclude Include="xtVec3d.h" />
     <ClInclude Include="xtWinGUIUtil.h" />
   </ItemGroup>
@@ -112,6 +113,7 @@
     <ClCompile Include="xtOctreeAdapter.cpp" />
     <ClCompile Include="xtOctreeNode.cpp" />
     <ClCompile Include="xtOctreeScene.cpp" />
+    <ClCompile Include="xtTriangleBox3Overlap.cpp" />
     <ClCompile Include="xtVec3d.cpp" />
     <ClCompile Include="xtWinGUIUtil.cpp" />
   </ItemGroup>
