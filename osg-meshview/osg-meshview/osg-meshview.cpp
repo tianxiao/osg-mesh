@@ -34,6 +34,8 @@
 #include "xtFemsurfOctreeScene.h"
 
 #include "mxtOctreeScene.h"
+#include "xtObjScene.h"
+#include "xtObjOctreeScene.h"
 
 
 osg::Node *createScene()
@@ -202,10 +204,8 @@ osg::Geode* CreateFemGraph()
 	return pfemsurf->CreateMesh();
 }
 
-
-int _tmain(int argc, _TCHAR* argv[])
+int testOctreeBuildFromFem()
 {
-
 	osg::ref_ptr<osgText::Text> updateText = new osgText::Text;
 	txFemSurf femsurf;
 
@@ -309,6 +309,65 @@ int _tmain(int argc, _TCHAR* argv[])
 	comViewer.addView(&viewer);
 
 	return comViewer.run();
+}
 
+int testObjScene()
+{
+	osg::Group *root = new osg::Group;
+
+	xtObjScene objscene;
+	//char *basepath = "..\\scene\\";
+	//char *filename = "..\\scene\\cornell_box.obj";
+	//char *basepath = "..\\scene\\scene\\";
+	//char *filename = "..\\scene\\bunny.obj";
+	char *basepath = "..\\scene\\";
+	char *filename = "..\\scene\\buddha.obj";
+	objscene.LoadObj(basepath,filename);
+	root->addChild( objscene.CreateObjScene() );
+
+	osgViewer::Viewer viewer;
+	
+	viewer.setSceneData( root );
+	viewer.setUpViewInWindow(200,200,960,640);
+
+	return viewer.run();
+}
+
+int testObjOctreeScene()
+{
+	osg::Group *root = new osg::Group;
+
+	xtObjScene objscene;
+	//char *basepath = "..\\scene\\";
+	//char *filename = "..\\scene\\cornell_box.obj";
+	char *basepath = "..\\scene\\";
+	char *filename = "..\\scene\\bunny.obj";
+	//char *basepath = "..\\scene\\scene\\";
+	//char *filename = "..\\scene\\buddha.obj";
+	xtObjOctreeScene objoctreescene;
+	objoctreescene.LoadObjData(basepath, filename);
+	objoctreescene.BuildOctree(0.0001);
+	int largestdepth = objoctreescene.GetLargestDepth();
+
+	int dumpLevel = largestdepth-3;
+	std::vector<xtOctreeNode<int> *> dumpnodelist;
+	objoctreescene.GetDumpLevelNodeList(dumpLevel,dumpnodelist);
+	root->addChild( objoctreescene.CreatemOctreeScene(dumpnodelist,false) );
+
+	osgViewer::Viewer viewer;
+	
+	viewer.setSceneData( root );
+	viewer.setUpViewInWindow(200,200,960,640);
+
+	return viewer.run();
+
+	return -1;
+}
+
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+	//return testObjScene();
+	return testObjOctreeScene();
 }
 

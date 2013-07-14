@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="tinyaobjloader">
+      <UniqueIdentifier>{0dba4097-44c4-489b-9fbd-f4f143198903}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -75,6 +78,21 @@
     <ClInclude Include="xtTriangleBox3Overlap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="tinyobjloader-master\tiny_obj_loader.h">
+      <Filter>tinyaobjloader</Filter>
+    </ClInclude>
+    <ClInclude Include="xtObjScene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xtObjOctreeScene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xtTinyIMPL.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xtOctreeDisplayUtil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -117,6 +135,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="xtTriangleBox3Overlap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tinyobjloader-master\tiny_obj_loader.cc">
+      <Filter>tinyaobjloader</Filter>
+    </ClCompile>
+    <ClCompile Include="xtObjScene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtObjOctreeScene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtTinyIMPL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtOctreeDisplayUtil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
