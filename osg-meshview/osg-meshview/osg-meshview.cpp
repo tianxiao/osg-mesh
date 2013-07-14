@@ -338,6 +338,7 @@ int testObjOctreeScene()
 	osg::Group *root = new osg::Group;
 
 	xtObjScene objscene;
+
 	//char *basepath = "..\\scene\\";
 	//char *filename = "..\\scene\\cornell_box.obj";
 	char *basepath = "..\\scene\\";
