@@ -37,6 +37,7 @@
 #include "xtObjScene.h"
 #include "xtObjOctreeScene.h"
 
+#include "xtWRLMParser.h"
 
 osg::Node *createScene()
 {
@@ -365,10 +366,47 @@ int testObjOctreeScene()
 	return -1;
 }
 
+int testFaceObjScene()
+{
+	osg::Group *root = new osg::Group;
+
+	xtObjScene objscene;
+	char *face0 = "sub91.fem";
+	char *face1 = "sub98.fem";
+
+	//===========================================
+	txFemSurf *pfemsurf = new txFemSurf;
+	pfemsurf->LoadFemFile(face0);
+
+	root->addChild( pfemsurf->CreateMesh() );
+
+	txFemSurf *pfemsurf2 = new txFemSurf;
+	pfemsurf2->LoadFemFile(face1);
+
+	root->addChild( pfemsurf2->CreateMesh() );
+	//===========================================
+
+	osgViewer::Viewer viewer;
+	
+	viewer.setSceneData( root );
+	viewer.setUpViewInWindow(200,200,960,640);
+
+	return viewer.run();
+}
+
+static inline int TestWRLParser()
+{
+	xtWRLMParser wrlparser;
+	wrlparser.LoadWRLFile("sub98.wrl");
+	wrlparser.DumpToFemFile("sub98.fem");
+	return 0;
+}
 
 int _tmain(int argc, _TCHAR* argv[])
 {
 	//return testObjScene();
-	return testObjOctreeScene();
+	//return testObjOctreeScene();
+	//return TestWRLParser();
+	return testFaceObjScene();
 }
 

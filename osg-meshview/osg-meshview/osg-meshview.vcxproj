@@ -89,7 +89,9 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="tinyobjloader-master\tiny_obj_loader.h" />
     <ClInclude Include="txFemSurf.h" />
+    <ClInclude Include="Vec2.h" />
     <ClInclude Include="Vec3.h" />
+    <ClInclude Include="xtDebutUtil.h" />
     <ClInclude Include="xtFemsurfOctreeScene.h" />
     <ClInclude Include="xtObjOctreeScene.h" />
     <ClInclude Include="xtObjScene.h" />
@@ -98,10 +100,12 @@
     <ClInclude Include="xtOctreeDisplayUtil.h" />
     <ClInclude Include="xtOctreeNode.h" />
     <ClInclude Include="xtOctreeScene.h" />
+    <ClInclude Include="xtPrimitive.h" />
     <ClInclude Include="xtTinyIMPL.h" />
     <ClInclude Include="xtTriangleBox3Overlap.h" />
     <ClInclude Include="xtVec3d.h" />
     <ClInclude Include="xtWinGUIUtil.h" />
+    <ClInclude Include="xtWRLMParser.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\buildpyramidGeometry\xtCreateHUD.cpp" />
@@ -114,6 +118,7 @@
     </ClCompile>
     <ClCompile Include="tinyobjloader-master\tiny_obj_loader.cc" />
     <ClCompile Include="txFemSurf.cpp" />
+    <ClCompile Include="Vec2.cpp" />
     <ClCompile Include="xtFemsurfOctreeScene.cpp" />
     <ClCompile Include="xtObjOctreeScene.cpp" />
     <ClCompile Include="xtObjScene.cpp" />
@@ -126,6 +131,7 @@
     <ClCompile Include="xtTriangleBox3Overlap.cpp" />
     <ClCompile Include="xtVec3d.cpp" />
     <ClCompile Include="xtWinGUIUtil.cpp" />
+    <ClCompile Include="xtWRLMParser.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

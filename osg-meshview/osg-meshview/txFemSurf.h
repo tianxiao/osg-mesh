@@ -1,31 +1,7 @@
 #pragma once
 #include "xtVec3d.h"
 #include <vector>
-
-class xtIndexTria3
-{
-public:
-	xtIndexTria3(int a, int b, int c) {
-		this->a[0] = a;
-		this->a[1] = b;
-		this->a[2] = c;
-	}
-
-	int a[3];
-};
-
-class xtIndexCquad4
-{
-public:
-	xtIndexCquad4(int a, int b, int c, int d) {
-		this->a[0] = a;
-		this->a[1] = b;
-		this->a[2] = c;
-		this->a[3] = d;
-	}
-
-	int a[4];
-};
+#include "xtPrimitive.h"
 
 struct xtNormalFaceList
 {
@@ -52,6 +28,17 @@ public:
 	txFemSurf(void);
 
 	void LoadFemFile(char *file);
+
+	void LoadFemFile(
+		std::vector<xtVec3df> &verts,
+		std::vector<xtIndexTria3> &ctria3index,
+		std::vector<xtIndexCquad4> &cquad4index) {
+			this->verts = verts;
+			this->ctria3index = ctria3index;
+			this->cquad4index = cquad4index;
+	}
+
+	void DumpToFem(char *filename);
 
 	void Draw();
 

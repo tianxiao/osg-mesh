@@ -30,6 +30,7 @@
 #include <osgGA/TrackballManipulator>
 #include <osg/Math>
 #include <iostream>
+#include "xtDebutUtil.h"
 
 txFemSurf::txFemSurf(void)
 {
@@ -673,7 +674,29 @@ public:
 
 };
 
+void txFemSurf::DumpToFem(char *filename)
+{
+	FILE *fp = fopen(filename, "w");
+	XTASSERT(fp,"File Open failed!");
+	
 
+	for ( size_t i=0; i<this->verts.size(); ++i ) {
+		xtVec3df &v = this->verts[i];
+		fprintf(fp, "GRID, %d, , %f, %f, %f\n",i+1,v.v[0], v.v[1], v.v[2]);
+	}
+
+	int a,b,c,d;
+	for ( size_t i=0; i<this->ctria3index.size(); ++i ) {
+		xtIndexTria3 &tria = this->ctria3index[i];
+		fprintf(fp, "CTRIA3, %d, 1, %d, %d, %d\n",i+1,tria.a[0]+1,tria.a[1]+1,tria.a[2]+1);
+	}
+	for ( size_t i=0; i<this->cquad4index.size(); ++i ) {
+		xtIndexCquad4 &quad = this->cquad4index[i];
+		fprintf(fp, "CQUAD4, %d, 1, %d, %d, %d, %d\n",i+1, quad.a[0]+1,quad.a[1]+1,quad.a[2]+1,quad.a[3]+1);
+	}
+
+	fclose(fp);
+}
 
 
 osg::Geode* txFemSurf::CreateMesh()
