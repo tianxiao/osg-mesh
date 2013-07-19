@@ -105,6 +105,12 @@
     <ClInclude Include="Vec2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="xtWRLData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xtWRLScene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -168,6 +174,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Vec2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtWRLData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtWRLScene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -105,7 +105,9 @@
     <ClInclude Include="xtTriangleBox3Overlap.h" />
     <ClInclude Include="xtVec3d.h" />
     <ClInclude Include="xtWinGUIUtil.h" />
+    <ClInclude Include="xtWRLData.h" />
     <ClInclude Include="xtWRLMParser.h" />
+    <ClInclude Include="xtWRLScene.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\buildpyramidGeometry\xtCreateHUD.cpp" />
@@ -131,7 +133,9 @@
     <ClCompile Include="xtTriangleBox3Overlap.cpp" />
     <ClCompile Include="xtVec3d.cpp" />
     <ClCompile Include="xtWinGUIUtil.cpp" />
+    <ClCompile Include="xtWRLData.cpp" />
     <ClCompile Include="xtWRLMParser.cpp" />
+    <ClCompile Include="xtWRLScene.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

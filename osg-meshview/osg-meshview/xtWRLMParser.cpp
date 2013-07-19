@@ -8,14 +8,18 @@
 #include "xtDebutUtil.h"
 #include "txFemSurf.h"
 #include "xtVec3d.h"
+#include "xtWRLData.h"
+
 
 xtWRLMParser::xtWRLMParser(void)
 {
+	this->data = new xtWRLDataS;
 }
 
 
 xtWRLMParser::~xtWRLMParser(void)
 {
+	delete this->data;
 }
 
 static inline bool isSpace(const char c) {
@@ -63,6 +67,12 @@ static inline void parseFloat3(
   z = parseFloat(token);
 }
 
+static inline void parseFloat2(float &x, float &y, const char *&token)
+{
+  x = parseFloat(token);
+  y = parseFloat(token);
+}
+
 static inline int parseIntWC(const char *& token)
 {
 	token += strcspn(token, "-0123456789");
@@ -91,6 +101,12 @@ static inline void parseIntWC5( int &a, int &b, int &c, int &d, int &e, const ch
 
 void xtWRLMParser::LoadWRLFile(char *filename)
 {
+
+	std::vector<Vec3> &mVertices = this->data->mVertices;
+	std::vector<xtIndexTria3> &mTris = this->data->mTris;
+	std::vector<xtIndexCquad4> &mQuads = this->data->mQuads;
+	std::vector<Vec2> &mTextureCoords = this->data->mTextureCoords;
+
 	//FILE *fp = fopen(filename,"r");
 	//fclose(fp);
 
@@ -113,6 +129,8 @@ void xtWRLMParser::LoadWRLFile(char *filename)
 	this->mIsCoordinate3 = false;
 	this->mIsIndexedFaceSet = false;
 	this->mIsIndexedFaceSetcoordIndex = false;
+
+	int linenumber = 1;
 
 	while( ifs.peek() != -1 ) {
 		ifs.getline(&buf[0],maxchars);
@@ -242,7 +260,7 @@ void xtWRLMParser::LoadWRLFile(char *filename)
 			token += 6;
 			token += strspn(token, " \t");
 			if ( token[0] == '[' ) {
-				if ( this->mIsSeparator&&this->mIsTexture2 &&this->mIsTextureCoordinate2Point ) {
+				if ( this->mIsSeparator &&this->mIsTextureCoordinate2 ) {
 					this->mIsTextureCoordinate2Point = true;
 					continue;
 				}
@@ -258,6 +276,14 @@ void xtWRLMParser::LoadWRLFile(char *filename)
 
 		if ( this->mIsTextureCoordinate2 && this->mIsTextureCoordinate2Point ) {
 			// parse texture coordinate
+			float x, y;
+			parseFloat2(x,y,token);
+			if ( x>1.0 || y >1.0 ) {
+				printf("%d line is valid the [0,1] texture coordinate", linenumber);
+				continue;
+			}
+			Vec2 temp(x,y);
+			data->mTextureCoords.push_back(temp);
 			continue;
 		}
 
@@ -278,7 +304,7 @@ void xtWRLMParser::LoadWRLFile(char *filename)
 			float x, y, z;
 			parseFloat3(x,y,z,token);
 			Vec3 v(x,y,z);
-			this->mVertices.push_back(v);
+			data->mVertices.push_back(v);
 			continue;
 		}
 
@@ -318,13 +344,13 @@ void xtWRLMParser::LoadWRLFile(char *filename)
 				int a, b, c, d;
 				parseIntWC4(a,b,c,d, token);
 				xtIndexTria3 tria3(a,b,c);
-				this->mTris.push_back(tria3);
+				data->mTris.push_back(tria3);
 				continue;
 			} else if ( intnum == 5 ) {
 				int a,b,c,d,e;
 				parseIntWC5(a,b,c,d,e,token);
 				xtIndexCquad4 quad4(a,b,c,d);
-				this->mQuads.push_back(quad4);
+				data->mQuads.push_back(quad4);
 				continue;
 			}
 			
@@ -344,7 +370,10 @@ void xtWRLMParser::LoadWRLFile(char *filename)
 		if ( this->mIsIndexedFaceSettextureCoordIndex ) {
 			// parse 
 			continue;
+
 		}
+
+		linenumber++;
 	}
 }
 
@@ -357,14 +386,20 @@ void xtWRLMParser::DumpToFemFile(char *femFile)
 
 txFemSurf *xtWRLMParser::ConverToFem()
 {
+
+	std::vector<Vec3> &mVertices = this->data->mVertices;
+	std::vector<xtIndexTria3> &mTris = this->data->mTris;
+	std::vector<xtIndexCquad4> &mQuads = this->data->mQuads;
+	std::vector<Vec2> &mTextureCoords = this->data->mTextureCoords;
+
 	txFemSurf *tempFemSurf = new txFemSurf;
 	std::vector<xtVec3df> verts;
-	verts.reserve(this->mVertices.size());
+	verts.reserve(mVertices.size());
 	for ( size_t i=0; i<mVertices.size(); ++i ) {
 		xtVec3df v(mVertices[i].x, mVertices[i].y, mVertices[i].z);
 		verts.push_back(v);
 	}
-	tempFemSurf->LoadFemFile(verts, this->mTris, this->mQuads);
+	tempFemSurf->LoadFemFile(verts, mTris, mQuads);
 
 	return tempFemSurf;
 }

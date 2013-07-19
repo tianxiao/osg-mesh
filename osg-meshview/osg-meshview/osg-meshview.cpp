@@ -38,6 +38,7 @@
 #include "xtObjOctreeScene.h"
 
 #include "xtWRLMParser.h"
+#include "xtWRLScene.h"
 
 osg::Node *createScene()
 {
@@ -402,11 +403,53 @@ static inline int TestWRLParser()
 	return 0;
 }
 
+static inline int TestWRLParserTextureDisplay()
+{
+	osg::Group *root = new osg::Group;
+
+	xtWRLMParser wrlparser;
+	wrlparser.LoadWRLFile("sub98.wrl");
+
+	osg::Texture2D *facesub98 = new osg::Texture2D;
+	// Protect form being optimized away as static state
+	facesub98->setDataVariance(osg::Object::DYNAMIC);
+
+	// load an image by reading a file
+	osg::Image *imageface98 = osgDB::readImageFile("sub98_session1_frame1.bmp");
+		//"sub98_session1_frame1.png");
+	if ( !imageface98 ) {
+		std::cout << " couldn't find texture, quiting." << std::endl;
+		return -1;
+	}
+	// Assign the texture to the image 
+	facesub98->setImage(imageface98);
+
+	// Create a new StateSet with default settings
+	osg::StateSet *stateOne = new osg::StateSet;
+
+	stateOne->setTextureAttributeAndModes(
+		0, facesub98, osg::StateAttribute::ON);
+
+	osg::Geode *facegeod = CreateGeo(wrlparser.GetData());
+	facegeod->setStateSet( stateOne );
+	//===========================================
+	root->addChild( facegeod );
+	//===========================================
+
+	osgViewer::Viewer viewer;
+	
+	viewer.setSceneData( root );
+	viewer.setUpViewInWindow(200,200,960,640);
+
+	return viewer.run();
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	//return testObjScene();
 	//return testObjOctreeScene();
 	//return TestWRLParser();
-	return testFaceObjScene();
+	//return testFaceObjScene();
+	return TestWRLParserTextureDisplay();
 }
 

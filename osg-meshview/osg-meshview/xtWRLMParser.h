@@ -4,6 +4,9 @@
 #include "Vec3.h"
 #include "xtPrimitive.h"
 
+
+
+struct xtWRLDataS;
 class txFemSurf;
 class xtWRLMParser
 {
@@ -16,11 +19,10 @@ public:
 	
 	txFemSurf *ConverToFem();
 
+	xtWRLDataS *GetData() { return this->data; }
+
 private:
-	std::vector<Vec3> mVertices;
-	std::vector<xtIndexTria3> mTris;
-	std::vector<xtIndexCquad4> mQuads;
-	std::vector<Vec2> mTextureCoords;
+	xtWRLDataS *data;
 
 	bool mIsSeparator;
 	bool mIsTexture2;
