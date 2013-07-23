@@ -8,6 +8,7 @@ namespace osg
 
 class xtGTSParser;
 struct xtGeometrySurfaceDataS;
+class xtCollisionEngine;
 class xtInterferecenTest
 {
 public:
@@ -25,6 +26,8 @@ private:
 	xtGeometrySurfaceDataS *mSurfI;
 	xtGeometrySurfaceDataS *mSurfJ;
 	xtGTSParser *mGtsparserI, *mGtsparserJ;
+
+	xtCollisionEngine *mCE;
 
 	osg::Group *sceneRoot;
 };

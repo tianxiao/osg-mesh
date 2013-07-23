@@ -132,6 +132,15 @@
     <ClInclude Include="xtInterferecenTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="RTree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xtCollisionEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xtPrimitiveTestUtil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -219,6 +228,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="xtInterferecenTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtCollisionEngine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtPrimitiveTestUtil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

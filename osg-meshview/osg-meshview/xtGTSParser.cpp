@@ -27,7 +27,11 @@ xtGTSParser::~xtGTSParser(void)
 void xtGTSParser::InitialLizeTranRot() 
 {
 	mSurface->tran = xtVector3d::Zero();
-	mSurface->rot.Identity();
+	mSurface->rot.Zero();
+	mSurface->rot << 
+		0,0,0,
+		0,0,0,
+		0,0,0;
 }
 
 void xtGTSParser::SetTranRot(xtVector3d *tran, xtMatrix3d *rot) {

@@ -85,6 +85,7 @@
     <ClInclude Include="mxtOctreeScene.h" />
     <ClInclude Include="Octree.h" />
     <ClInclude Include="OctreePoint.h" />
+    <ClInclude Include="RTree.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Stopwatch.h" />
     <ClInclude Include="targetver.h" />
@@ -92,6 +93,7 @@
     <ClInclude Include="txFemSurf.h" />
     <ClInclude Include="Vec2.h" />
     <ClInclude Include="Vec3.h" />
+    <ClInclude Include="xtCollisionEngine.h" />
     <ClInclude Include="xtConvertUtil.h" />
     <ClInclude Include="xtDebutUtil.h" />
     <ClInclude Include="xtFemsurfOctreeScene.h" />
@@ -107,6 +109,7 @@
     <ClInclude Include="xtOctreeNode.h" />
     <ClInclude Include="xtOctreeScene.h" />
     <ClInclude Include="xtPrimitive.h" />
+    <ClInclude Include="xtPrimitiveTestUtil.h" />
     <ClInclude Include="xtSectionOctree.h" />
     <ClInclude Include="xtTinyIMPL.h" />
     <ClInclude Include="xtTriangleBox3Overlap.h" />
@@ -128,6 +131,7 @@
     <ClCompile Include="tinyobjloader-master\tiny_obj_loader.cc" />
     <ClCompile Include="txFemSurf.cpp" />
     <ClCompile Include="Vec2.cpp" />
+    <ClCompile Include="xtCollisionEngine.cpp" />
     <ClCompile Include="xtConvertUtil.cpp" />
     <ClCompile Include="xtFemsurfOctreeScene.cpp" />
     <ClCompile Include="xtGeometrySurfaceData.cpp" />
@@ -141,6 +145,7 @@
     <ClCompile Include="xtOctreeDisplayUtil.cpp" />
     <ClCompile Include="xtOctreeNode.cpp" />
     <ClCompile Include="xtOctreeScene.cpp" />
+    <ClCompile Include="xtPrimitiveTestUtil.cpp" />
     <ClCompile Include="xtSectionOctree.cpp" />
     <ClCompile Include="xtTinyIMPL.cpp" />
     <ClCompile Include="xtTriangleBox3Overlap.cpp" />

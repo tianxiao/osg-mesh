@@ -3,6 +3,8 @@
 #include "xtGeometrySurfaceData.h"
 #include "xtGTSParser.h"
 #include "../buildpyramidGeometry/osgcommon.h"
+#include "xtCollisionEngine.h"
+#include "xtOctreeDisplayUtil.h"
 
 xtInterferecenTest::xtInterferecenTest(void)
 {
@@ -11,12 +13,14 @@ xtInterferecenTest::xtInterferecenTest(void)
 	this->mSurfI = mGtsparserI->GetGTSSurface();
 	this->mSurfJ = mGtsparserJ->GetGTSSurface();
 
+
 	sceneRoot = new osg::Group;
 }
 
 
 xtInterferecenTest::~xtInterferecenTest(void)
 {
+	delete mCE;
 
 	delete this->mGtsparserI;
 	delete this->mGtsparserJ;
@@ -27,6 +31,10 @@ void xtInterferecenTest::LoadSurf(const char *fileI, const char *fileJ)
 {
 	this->mGtsparserI->LoadGTS(fileI);
 	this->mGtsparserJ->LoadGTS(fileJ);
+
+	mCE = new xtCollisionEngine;
+	mCE->SetSurfIJ(mSurfI,mSurfJ);
+
 }
 
 void xtInterferecenTest::SetTranRot(xtVector3d *tranI, xtMatrix3d *rotI, xtVector3d *tranJ, xtMatrix3d *rotJ)
@@ -39,6 +47,11 @@ void xtInterferecenTest::SetUpScene()
 {
 	sceneRoot->addChild(mGtsparserI->CreateSceneWithTranRot());
 	sceneRoot->addChild(mGtsparserJ->CreateSceneWithTranRot());
+
+	if ( mCE->Collide() ) {
+		std::vector<xtCollidePair> &pairs = mCE->GetColliedPairs();
+		sceneRoot->addChild( xtOctreeDisplayUtility::RenderCollided(mSurfI,mSurfJ,pairs) );
+	}
 }
 
 int xtInterferecenTest::RunScene()

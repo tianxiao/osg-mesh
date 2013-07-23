@@ -208,3 +208,62 @@ osg::Node *xtOctreeDisplayUtility::DisplayxtGeometrySurfaceDataWithTranRot(xtGeo
 	return trans;
 }
 
+osg::Node *xtOctreeDisplayUtility::RenderCollided(xtGeometrySurfaceDataS *surfaceI, xtGeometrySurfaceDataS *surfaceJ, std::vector<xtCollidePair> &pairs)
+{
+	std::vector<int> cpI, cpJ;
+	cpI.reserve(pairs.size());
+	cpJ.reserve(pairs.size());
+	for ( size_t i=0; i<pairs.size(); ++i ) {
+		cpI.push_back(pairs[i].i);
+		cpJ.push_back(pairs[i].j);
+	}
+
+	osg::Group *cpnode = new osg::Group;
+	cpnode->addChild(RenderCollideList(surfaceI,cpI,xtColor(1.0,.0,.0,1.),false));
+	cpnode->addChild(RenderCollideList(surfaceJ,cpJ,xtColor(.0,1.,0.,1.),false));
+	cpnode->setName("Collision Pair");
+
+	return cpnode;
+}
+
+osg::Geode *xtOctreeDisplayUtility::RenderCollideList(xtGeometrySurfaceDataS *surface, std::vector<int> &indices, xtColor color, bool isWireFrame)
+{
+	osg::Geode *geode = new osg::Geode;
+
+	osg::Geometry *partialmesh = new osg::Geometry;
+
+	osg::Vec3Array *verts = new osg::Vec3Array;
+	verts->reserve( indices.size()*3 );
+	osg::Vec3Array *normals = new osg::Vec3Array;
+	normals->reserve( indices.size() );
+
+	for ( size_t i=0; i<indices.size(); ++i ) {
+		xtIndexTria3 &tria = surface->indices[indices[i]];
+		xtPointsTria pointtria(tria,surface);
+		verts->push_back(osg::Vec3((float)pointtria.pa.x(),(float)pointtria.pa.y(),(float)pointtria.pa.z()));
+		verts->push_back(osg::Vec3((float)pointtria.pb.x(),(float)pointtria.pb.y(),(float)pointtria.pb.z()));
+		verts->push_back(osg::Vec3((float)pointtria.pc.x(),(float)pointtria.pc.y(),(float)pointtria.pc.z()));
+		xtVector3d normal = pointtria.Normal();
+		normals->push_back(osg::Vec3(normal.x(),normal.y(),normal.z()));
+	}
+
+	osg::Vec4Array *colors = new osg::Vec4Array;
+	colors->push_back( osg::Vec4(color.r,color.b,color.g,color.alpha));
+
+	partialmesh->setVertexArray(verts);
+	partialmesh->setColorArray(colors);
+	partialmesh->setColorBinding(osg::Geometry::BIND_OVERALL);
+	partialmesh->setNormalArray(normals);
+	partialmesh->setNormalBinding(osg::Geometry::BIND_PER_PRIMITIVE);
+	partialmesh->addPrimitiveSet(new osg::DrawArrays( osg::PrimitiveSet::TRIANGLES,0,verts->size() ));
+
+	if ( isWireFrame ) {
+		osg::StateSet *state2 = new osg::StateSet();
+		state2->setAttribute( new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE ));
+		geode->setStateSet(state2);
+	}
+
+	geode->addDrawable(partialmesh);
+
+	return geode;
+}

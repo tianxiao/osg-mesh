@@ -1,4 +1,5 @@
 #pragma once
+#include "linearmathcom.h"
 
 class xtIndexTria3
 {
@@ -11,6 +12,8 @@ public:
 
 	int a[3];
 };
+
+
 
 class xtIndexCquad4
 {
@@ -29,3 +32,23 @@ struct xtEdge
 {
 	int a, b;
 };
+
+struct xtBBOX
+{
+	xtVector3d min;
+	xtVector3d max;
+};
+
+struct xtCollidePair
+{
+	int i;
+	int j;
+};
+
+struct xtColor
+{
+	xtColor(float r, float g, float b, float alpha)
+		:r(r),g(g),b(b),alpha(alpha) {};
+	float r,g,b,alpha;
+};
+
