@@ -62,6 +62,49 @@ public:
 		}
 	}
 
+	void DumpAxisXSection(double xplane, std::vector<xtOctreeNode<T> *> &intersectnode)
+	{
+		DumpAxisSection( xplane, 0, intersectnode );
+	}
+
+	void DumpAxisYSection(double yplane, std::vector<xtOctreeNode<T> *> &intersectnode)
+	{
+		DumpAxisSection( yplane, 1, intersectnode );
+	}
+
+	void DumpAxisZSection(double zplane, std::vector<xtOctreeNode<T> *> &intersectnode)
+	{
+		DumpAxisSection( zplane, 2, intersectnode );
+	}
+
+private:
+
+	void DumpAxisSection( double v, int axis, std::vector<xtOctreeNode<T> *> &intersectnode ) 
+	{
+		assert(axis>=0 && axis<=2);
+		// Initial xplane didn't intersect with the root box
+		if ( mRoot->mLB[axis]>v || mRoot->mRT[axis]<v) {
+			return ;
+		}
+
+		std::queue<xtOctreeNode<T> *> nodequeue;
+		nodequeue.push(mRoot);
+
+		while ( !nodequeue.empty() ) {
+			xtOctreeNode<T> *currentnode = nodequeue.front();
+			nodequeue.pop();
+
+			if ( currentnode->mLB[axis]<=v && currentnode->mRT[axis]>=v ) {
+				intersectnode.push_back(currentnode);
+				if ( currentnode->mChild ) {
+					for ( int i=0; i<8; ++i ) {
+						nodequeue.push(&(currentnode->mChild[i]));
+					}
+				}
+			}
+		}
+	}
+
 private:
 	//void InsertElement
 

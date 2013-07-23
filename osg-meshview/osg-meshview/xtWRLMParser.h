@@ -6,6 +6,7 @@
 
 
 
+struct xtBMPPicFormat;
 struct xtWRLDataS;
 class txFemSurf;
 class xtWRLMParser
@@ -21,8 +22,11 @@ public:
 
 	xtWRLDataS *GetData() { return this->data; }
 
+	xtBMPPicFormat *GetPicData() { return this->img; }
+
 private:
 	xtWRLDataS *data;
+	xtBMPPicFormat *img;
 
 	bool mIsSeparator;
 	bool mIsTexture2;

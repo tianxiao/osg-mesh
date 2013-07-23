@@ -39,6 +39,12 @@
 
 #include "xtWRLMParser.h"
 #include "xtWRLScene.h"
+#include "xtImagPro.h"
+
+#include "linearmathcom.h"
+
+#include "xtGTSParser.h"
+#include "xtInterferecenTest.h"
 
 osg::Node *createScene()
 {
@@ -343,8 +349,8 @@ int testObjOctreeScene()
 
 	//char *basepath = "..\\scene\\";
 	//char *filename = "..\\scene\\cornell_box.obj";
-	char *basepath = "..\\scene\\";
-	char *filename = "..\\scene\\bunny.obj";
+	char *basepath = "E:\\gitProject\\osg-mesh\\osg-meshview\\osg-meshview\\scene";
+	char *filename = "E:\\gitProject\\osg-mesh\\osg-meshview\\osg-meshview\\scene\\bunny.obj";
 	//char *basepath = "..\\scene\\scene\\";
 	//char *filename = "..\\scene\\buddha.obj";
 	xtObjOctreeScene objoctreescene;
@@ -357,14 +363,27 @@ int testObjOctreeScene()
 	objoctreescene.GetDumpLevelNodeList(dumpLevel,dumpnodelist);
 	root->addChild( objoctreescene.CreatemOctreeScene(dumpnodelist,false) );
 
-	osgViewer::Viewer viewer;
+	osgViewer::View *octreeView = new osgViewer::View;
 	
-	viewer.setSceneData( root );
-	viewer.setUpViewInWindow(200,200,960,640);
+	octreeView->setSceneData( root );
+	octreeView->setUpViewInWindow(200,200,960,640);
 
-	return viewer.run();
+	osgViewer::CompositeViewer comViewer;
 
-	return -1;
+	osgViewer::View *sectionView = new osgViewer::View;
+	osg::Group *rootSection = new osg::Group;
+	rootSection->addChild( objoctreescene.SectionAxisX( 0 ) );
+	rootSection->addChild( objoctreescene.SectionAxisX( 500 ) );
+	rootSection->addChild( objoctreescene.SectionAxisX( -500 ) );
+	rootSection->addChild( objoctreescene.SectionAxisY( 0 ) );
+	rootSection->addChild( objoctreescene.SectionAxisZ( 0 ) );
+	sectionView->setSceneData( rootSection );
+	sectionView->setUpViewInWindow(400,400,960,640);
+	comViewer.addView( sectionView );
+
+	comViewer.addView( octreeView );
+
+	return comViewer.run();
 }
 
 int testFaceObjScene()
@@ -400,6 +419,8 @@ static inline int TestWRLParser()
 	xtWRLMParser wrlparser;
 	wrlparser.LoadWRLFile("sub98.wrl");
 	wrlparser.DumpToFemFile("sub98.fem");
+	DumImage(wrlparser.GetPicData(), "sub98.ppm");
+
 	return 0;
 }
 
@@ -415,7 +436,7 @@ static inline int TestWRLParserTextureDisplay()
 	facesub98->setDataVariance(osg::Object::DYNAMIC);
 
 	// load an image by reading a file
-	osg::Image *imageface98 = osgDB::readImageFile("sub98_session1_frame1.bmp");
+	osg::Image *imageface98 = osgDB::readImageFile("sub98.bmp");
 		//"sub98_session1_frame1.png");
 	if ( !imageface98 ) {
 		std::cout << " couldn't find texture, quiting." << std::endl;
@@ -444,12 +465,76 @@ static inline int TestWRLParserTextureDisplay()
 	return viewer.run();
 }
 
+
+static inline int TestGTSParser()
+{
+	xtGTSParser gtsparser;
+	//const char* filename = "D:\\model3d\\gts\\head.gts";
+	const char* filename = "D:\\model3d\\gts\\epcot.gts";
+	const char* conefilename = "D:\\model3d\\gts\\cone.gts";
+	gtsparser.LoadGTS(filename);
+
+	osgViewer::CompositeViewer comViewer;
+
+	osg::Group *gtsroot = new osg::Group;
+	gtsroot->addChild(gtsparser.CreateScene());
+	osgViewer::View *viewGts = new osgViewer::View;
+	viewGts->setUpViewInWindow(200,200,640,480);
+	viewGts->setSceneData(gtsroot);
+
+	comViewer.addView(viewGts);
+
+	return comViewer.run();
+
+
+}
+
+static inline int TestGTSCollision()
+{
+	xtGTSParser gtsparser;
+	xtGTSParser conegtsparser;
+	//const char* filename = "D:\\model3d\\gts\\head.gts";
+	const char* filename = "D:\\model3d\\gts\\sphere5.gts";
+	const char* conefilename = "D:\\model3d\\gts\\sphere5.gts";
+	gtsparser.LoadGTS(filename);
+	conegtsparser.SetTranRot(new xtVector3d(0.7,0,0),NULL);
+	conegtsparser.LoadGTS(conefilename);
+
+	osgViewer::CompositeViewer comViewer;
+
+	osg::Group *gtsroot = new osg::Group;
+	gtsroot->addChild(gtsparser.CreateScene());
+	gtsroot->addChild(conegtsparser.CreateSceneWithTranRot());
+	osgViewer::View *viewGts = new osgViewer::View;
+	viewGts->setUpViewInWindow(200,200,640,480);
+	viewGts->setSceneData(gtsroot);
+
+	comViewer.addView(viewGts);
+
+	return comViewer.run();
+}
+
+static inline int TestGTSCollisionMoreCompact()
+{
+	xtInterferecenTest interference;
+	const char* filename = "D:\\model3d\\gts\\sphere5.gts";
+	interference.LoadSurf(filename,filename);
+	interference.SetTranRot(new xtVector3d(0.7,0,0),NULL,NULL,NULL);
+
+	return interference.RunScene();
+}
+
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	//return testObjScene();
 	//return testObjOctreeScene();
 	//return TestWRLParser();
 	//return testFaceObjScene();
-	return TestWRLParserTextureDisplay();
+	//return TestWRLParserTextureDisplay();
+	//return TestGTSParser();
+	//return TestGTSCollision();
+	return TestGTSCollisionMoreCompact();
+	//return 0;
 }
 

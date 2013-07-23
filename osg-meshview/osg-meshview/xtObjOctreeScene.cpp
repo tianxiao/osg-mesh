@@ -6,6 +6,7 @@
 #include "xtOctreeAdapter.h"
 #include "xtOctreeDisplayUtil.h"
 
+
 xtObjOctreeScene::xtObjOctreeScene(void)
 {
 }
@@ -97,4 +98,34 @@ void xtObjOctreeScene::GetDumpLevelNodeList(int level,std::vector<xtOctreeNode<i
 osg::Geode *xtObjOctreeScene::CreatemOctreeScene(std::vector<xtOctreeNode<int> *> &mDumpLevelNodelist, bool isWireFrame/*=true*/, bool debugon/*=true*/)
 {
 	return xtOctreeDisplayUtility::CreatemOctreeScene( this->mOctreeDataA, this->mCubeCenter, mDumpLevelNodelist, isWireFrame, debugon);
+}
+
+osg::Geode *xtObjOctreeScene::SectionAxisX(double xplane)
+{
+	std::vector<xtOctreeNode<int> *> sectionnodes;
+
+	mOctree->DumpAxisXSection(xplane,sectionnodes);
+
+	return xtOctreeDisplayUtility::CreateOctreeSection(xplane,0,this->mOctreeDataA, this->mCubeCenter, sectionnodes);
+}
+
+
+osg::Geode *xtObjOctreeScene::SectionAxisY(double yplane)
+{
+	std::vector<xtOctreeNode<int> *> sectionnodes;
+
+	mOctree->DumpAxisYSection(yplane,sectionnodes);
+
+	return xtOctreeDisplayUtility::CreateOctreeSection(yplane,1,this->mOctreeDataA, this->mCubeCenter, sectionnodes);
+
+}
+
+osg::Geode *xtObjOctreeScene::SectionAxisZ(double zplane)
+{
+	std::vector<xtOctreeNode<int> *> sectionnodes;
+
+	mOctree->DumpAxisZSection(zplane,sectionnodes);
+
+	return xtOctreeDisplayUtility::CreateOctreeSection(zplane,2,this->mOctreeDataA, this->mCubeCenter, sectionnodes);
+
 }

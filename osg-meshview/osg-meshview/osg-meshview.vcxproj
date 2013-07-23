@@ -49,7 +49,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../osg/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../osg/include;../eigen-2249f9c22fe8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -81,6 +81,7 @@
     <ClInclude Include="..\buildpyramidGeometry\osgcommon.h" />
     <ClInclude Include="..\buildpyramidGeometry\xtCreateHUD.h" />
     <ClInclude Include="..\buildpyramidGeometry\xtPickHandler.h" />
+    <ClInclude Include="linearmathcom.h" />
     <ClInclude Include="mxtOctreeScene.h" />
     <ClInclude Include="Octree.h" />
     <ClInclude Include="OctreePoint.h" />
@@ -91,8 +92,13 @@
     <ClInclude Include="txFemSurf.h" />
     <ClInclude Include="Vec2.h" />
     <ClInclude Include="Vec3.h" />
+    <ClInclude Include="xtConvertUtil.h" />
     <ClInclude Include="xtDebutUtil.h" />
     <ClInclude Include="xtFemsurfOctreeScene.h" />
+    <ClInclude Include="xtGeometrySurfaceData.h" />
+    <ClInclude Include="xtGTSParser.h" />
+    <ClInclude Include="xtImagPro.h" />
+    <ClInclude Include="xtInterferecenTest.h" />
     <ClInclude Include="xtObjOctreeScene.h" />
     <ClInclude Include="xtObjScene.h" />
     <ClInclude Include="xtOctree.h" />
@@ -101,6 +107,7 @@
     <ClInclude Include="xtOctreeNode.h" />
     <ClInclude Include="xtOctreeScene.h" />
     <ClInclude Include="xtPrimitive.h" />
+    <ClInclude Include="xtSectionOctree.h" />
     <ClInclude Include="xtTinyIMPL.h" />
     <ClInclude Include="xtTriangleBox3Overlap.h" />
     <ClInclude Include="xtVec3d.h" />
@@ -121,7 +128,12 @@
     <ClCompile Include="tinyobjloader-master\tiny_obj_loader.cc" />
     <ClCompile Include="txFemSurf.cpp" />
     <ClCompile Include="Vec2.cpp" />
+    <ClCompile Include="xtConvertUtil.cpp" />
     <ClCompile Include="xtFemsurfOctreeScene.cpp" />
+    <ClCompile Include="xtGeometrySurfaceData.cpp" />
+    <ClCompile Include="xtGTSParser.cpp" />
+    <ClCompile Include="xtImagPro.cpp" />
+    <ClCompile Include="xtInterferecenTest.cpp" />
     <ClCompile Include="xtObjOctreeScene.cpp" />
     <ClCompile Include="xtObjScene.cpp" />
     <ClCompile Include="xtOctree.cpp" />
@@ -129,6 +141,7 @@
     <ClCompile Include="xtOctreeDisplayUtil.cpp" />
     <ClCompile Include="xtOctreeNode.cpp" />
     <ClCompile Include="xtOctreeScene.cpp" />
+    <ClCompile Include="xtSectionOctree.cpp" />
     <ClCompile Include="xtTinyIMPL.cpp" />
     <ClCompile Include="xtTriangleBox3Overlap.cpp" />
     <ClCompile Include="xtVec3d.cpp" />

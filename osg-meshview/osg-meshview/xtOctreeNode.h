@@ -24,6 +24,11 @@ struct xtPnt3
 		return tem;
 	}
 
+	T& operator[](int index)
+	{
+		return (&x)[index];
+	}
+
 	xtPnt3 Half() {
 		xtPnt3 temp;
 		temp.x = x/2;

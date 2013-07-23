@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "xtWRLMParser.h"
+#include <cstdlib>
 #include <stdlib.h>
 #include <stdio.h>
 #include <fstream>
@@ -9,16 +10,20 @@
 #include "txFemSurf.h"
 #include "xtVec3d.h"
 #include "xtWRLData.h"
+#include "xtImagPro.h"
+#include "xtConvertUtil.h"
 
 
 xtWRLMParser::xtWRLMParser(void)
 {
 	this->data = new xtWRLDataS;
+	this->img = new xtBMPPicFormat;
 }
 
 
 xtWRLMParser::~xtWRLMParser(void)
 {
+	delete this->img;
 	delete this->data;
 }
 
@@ -50,6 +55,13 @@ static inline void parseInt2( int &a, int &b, const char *&token )
 	b = parseInt(token);
 }
 
+static inline void parseInt3( int &a, int &b, int &c, const char *&token )
+{
+	a = parseInt(token);
+	b = parseInt(token);
+	c = parseInt(token);
+}
+
 static inline float parseFloat(const char*& token)
 {
   token += strspn(token, " \t");
@@ -65,6 +77,42 @@ static inline void parseFloat3(
   x = parseFloat(token);
   y = parseFloat(token);
   z = parseFloat(token);
+}
+
+static inline unsigned int parseHex(const char *&token)
+{
+	token += strspn(token, " \t");
+	const char *start = token;
+	
+	token += strcspn(token, " \t\r");
+	std::string tempstr(start,token);
+	//unsigned int temp = lexical_cast<unsigned int>(tempstr.c_str());
+	char *p;
+	unsigned int temp = (unsigned int) strtoul( tempstr.c_str(), &p, 16 );
+	if ( * p!=0 ) {
+		printf("%s Not a number", tempstr.c_str());
+		return 0;
+	}
+	return temp;
+}
+
+//typedef unsigned int xtUINT;
+static inline void parseHex8(unsigned int a[], const char *&token)
+{
+	for ( int i=0; i<8; ++i ) {
+		a[i] = parseHex(token);
+	}
+}
+
+
+const int mask65 = 255<<16;
+const int mask43 = 255<<8;
+const int mask21 = 255;
+static inline void splitHex(xtHexColor &color, unsigned int x)
+{
+	color.r = (unsigned char) ( (x&mask65)>>16 );
+	color.g = (unsigned char) ( (x&mask43)>>8 );
+	color.b = (unsigned char) ( (x&mask21) );
 }
 
 static inline void parseFloat2(float &x, float &y, const char *&token)
@@ -188,8 +236,13 @@ void xtWRLMParser::LoadWRLFile(char *filename)
 		if ( (0==strncmp(token, "image", 5)) && isSpace(token[5])) {
 			if(mIsSeparator&&mIsTexture2) {
 				token += 6;
-				int width, height;
-				parseInt2(width, height, token);
+				int width, height, channels;
+				//parseInt2(width, height, token);
+				parseInt3(width, height, channels, token);
+				img->width = width;
+				img->height = height;
+				img->channels = channels;
+				img->colors.reserve(img->width*img->height*img->channels);
 				this->mStartTextureData = true;
 				continue;
 			} else {
@@ -240,6 +293,14 @@ void xtWRLMParser::LoadWRLFile(char *filename)
 
 		if ( this->mStartTextureData ) {
 			// parse texture data
+			assert(sizeof(unsigned int)/sizeof(char)>=4);
+			unsigned int a[8];
+			parseHex8(a,token);
+			for ( int i=0; i<8; ++i ) {
+				xtHexColor color;
+				splitHex(color, a[i]);
+				img->colors.push_back(color);
+			}
 			continue;
 		}
 

@@ -19,6 +19,12 @@ public:
 
 	osg::Geode *CreatemOctreeScene(std::vector<xtOctreeNode<int> *> &mDumpLevelNodelist, bool isWireFrame=true, bool debugon=true);
 
+	osg::Geode *SectionAxisX(double xplane);
+
+	osg::Geode *SectionAxisY(double yplane);
+
+	osg::Geode *SectionAxisZ(double zplane);
+
 private:
 	void BuildAdapterData(double resolution);
 

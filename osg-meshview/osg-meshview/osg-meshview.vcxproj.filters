@@ -111,6 +111,27 @@
     <ClInclude Include="xtWRLScene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="xtImagPro.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xtConvertUtil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xtSectionOctree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xtGTSParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xtGeometrySurfaceData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="linearmathcom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xtInterferecenTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -180,6 +201,24 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="xtWRLScene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtImagPro.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtConvertUtil.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtSectionOctree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtGTSParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtGeometrySurfaceData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtInterferecenTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -24,3 +24,8 @@ public:
 
 	int a[4];
 };
+
+struct xtEdge
+{
+	int a, b;
+};
