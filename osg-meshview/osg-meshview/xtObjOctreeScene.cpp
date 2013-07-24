@@ -129,3 +129,4 @@ osg::Geode *xtObjOctreeScene::SectionAxisZ(double zplane)
 	return xtOctreeDisplayUtility::CreateOctreeSection(zplane,2,this->mOctreeDataA, this->mCubeCenter, sectionnodes);
 
 }
+

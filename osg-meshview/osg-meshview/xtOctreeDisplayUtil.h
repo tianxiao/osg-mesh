@@ -30,4 +30,6 @@ namespace xtOctreeDisplayUtility
 	osg::Node *RenderCollided(xtGeometrySurfaceDataS *surfaceI, xtGeometrySurfaceDataS *surfaceJ, std::vector<xtCollidePair> &pairs);
 
 	osg::Geode *RenderCollideList(xtGeometrySurfaceDataS *surface, std::vector<int> &index, xtColor color, bool isWireFrame=true);
+
+	osg::Geode *RenderTriangle(xtTriangle *tri, xtColor color, bool wirefrme=true);
 };

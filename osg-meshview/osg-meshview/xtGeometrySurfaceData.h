@@ -43,7 +43,7 @@ public:
 
 	xtVector3d Normal() {
 		xtVector3d pac = pa-pc;
-		xtVector3d pbc = pa-pc;
+		xtVector3d pbc = pb-pc;
 		xtVector3d normal = pac.cross(pbc);
 		normal.normalize();
 		return normal;

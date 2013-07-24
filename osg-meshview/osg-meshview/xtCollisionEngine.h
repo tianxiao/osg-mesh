@@ -6,10 +6,12 @@
 struct xtRtreeImp;
 struct xtGeometrySurfaceDataS;
 
-
+#define RTREE_DEBUG_RESULT 0
 
 class xtCollisionEngine
 {
+	friend class xtInterferecenTest;
+
 public:
 	xtCollisionEngine(void);
 	~xtCollisionEngine(void);
@@ -29,6 +31,7 @@ public:
 private:
 	void BuildSurfBBOX();
 	void BuildRTree();
+	void SetM4J2I();
 
 	bool TriTriCollision(int i, int j);
 
@@ -41,6 +44,16 @@ private:
 	std::vector<xtBBOX> mJBBoxList;
 
 	std::vector<xtCollidePair> mCollide;
+
+	xtVector3d tranj2i; 
+	xtMatrix3d rotj2i; 
+
+
+	// For debug
+#if RTREE_DEBUG_RESULT
+	std::vector<int> tempJlist;
+	std::vector<std::vector<int>> tempIBoxList;
+#endif
 
 };
 

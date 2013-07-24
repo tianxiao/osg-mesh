@@ -46,6 +46,8 @@
 #include "xtGTSParser.h"
 #include "xtInterferecenTest.h"
 
+#include "xtTriTriCollideScene.h"
+
 osg::Node *createScene()
 {
 	osg::Geode *geode = new osg::Geode();
@@ -524,6 +526,14 @@ static inline int TestGTSCollisionMoreCompact()
 	return interference.RunScene();
 }
 
+static inline int TestTriTriIntersection()
+{
+	xtTriTriCollideScene tritris;
+	tritris.Initial();
+
+	return tritris.RunRender();
+}
+
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -535,6 +545,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	//return TestGTSParser();
 	//return TestGTSCollision();
 	return TestGTSCollisionMoreCompact();
+	//return TestTriTriIntersection();
+
 	//return 0;
 }
 

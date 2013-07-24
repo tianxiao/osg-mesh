@@ -219,8 +219,8 @@ osg::Node *xtOctreeDisplayUtility::RenderCollided(xtGeometrySurfaceDataS *surfac
 	}
 
 	osg::Group *cpnode = new osg::Group;
-	cpnode->addChild(RenderCollideList(surfaceI,cpI,xtColor(1.0,.0,.0,1.),false));
-	cpnode->addChild(RenderCollideList(surfaceJ,cpJ,xtColor(.0,1.,0.,1.),false));
+	cpnode->addChild(RenderCollideList(surfaceI,cpI,xtColor(0.5,0.5,0.0,1.),false));
+	cpnode->addChild(RenderCollideList(surfaceJ,cpJ,xtColor(0.5,0.0,0.5,1.),false));
 	cpnode->setName("Collision Pair");
 
 	return cpnode;
@@ -244,7 +244,7 @@ osg::Geode *xtOctreeDisplayUtility::RenderCollideList(xtGeometrySurfaceDataS *su
 		verts->push_back(osg::Vec3((float)pointtria.pb.x(),(float)pointtria.pb.y(),(float)pointtria.pb.z()));
 		verts->push_back(osg::Vec3((float)pointtria.pc.x(),(float)pointtria.pc.y(),(float)pointtria.pc.z()));
 		xtVector3d normal = pointtria.Normal();
-		normals->push_back(osg::Vec3(normal.x(),normal.y(),normal.z()));
+		normals->push_back(osg::Vec3((float)normal.x(),(float)normal.y(),(float)normal.z()));
 	}
 
 	osg::Vec4Array *colors = new osg::Vec4Array;
@@ -264,6 +264,46 @@ osg::Geode *xtOctreeDisplayUtility::RenderCollideList(xtGeometrySurfaceDataS *su
 	}
 
 	geode->addDrawable(partialmesh);
+
+	return geode;
+}
+
+osg::Geode *xtOctreeDisplayUtility::RenderTriangle(xtTriangle *tri, xtColor color, bool isWireFrame/*=true*/)
+{
+	osg::Geode *geode = new osg::Geode;
+
+	osg::Geometry *trishape = new osg::Geometry;
+
+	osg::Vec3Array *verts = new osg::Vec3Array;
+	verts->reserve( 3 );
+	osg::Vec3Array *normals = new osg::Vec3Array;
+	normals->reserve( 1 );
+
+	verts->push_back( osg::Vec3((float)tri->pa.x(),(float)tri->pa.y(),(float)tri->pa.z()));
+	verts->push_back( osg::Vec3((float)tri->pb.x(),(float)tri->pb.y(),(float)tri->pb.z()));
+	verts->push_back( osg::Vec3((float)tri->pc.x(),(float)tri->pc.y(),(float)tri->pc.z()));
+
+	xtVector3d norm = tri->TriNormal();
+
+	osg::Vec4Array *colors = new osg::Vec4Array;
+	colors->push_back( osg::Vec4(color.r,color.b,color.g,color.alpha));
+
+	normals->push_back(osg::Vec3((float)norm.x(),(float)norm.y(),(float)norm.z()));
+
+	trishape->setVertexArray(verts);
+	trishape->setColorArray(colors);
+	trishape->setColorBinding(osg::Geometry::BIND_OVERALL);
+	trishape->setNormalArray(normals);
+	trishape->setNormalBinding(osg::Geometry::BIND_PER_PRIMITIVE);
+	trishape->addPrimitiveSet(new osg::DrawArrays( osg::PrimitiveSet::TRIANGLES,0,3 ));
+
+	if ( isWireFrame ) {
+		osg::StateSet *state2 = new osg::StateSet();
+		state2->setAttribute( new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE ));
+		geode->setStateSet(state2);
+	}
+
+	geode->addDrawable(trishape);
 
 	return geode;
 }

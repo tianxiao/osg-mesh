@@ -52,6 +52,28 @@ void xtInterferecenTest::SetUpScene()
 		std::vector<xtCollidePair> &pairs = mCE->GetColliedPairs();
 		sceneRoot->addChild( xtOctreeDisplayUtility::RenderCollided(mSurfI,mSurfJ,pairs) );
 	}
+
+#if RTREE_DEBUG_RESULT
+	// RTree results
+	if ( mCE->tempIBoxList.size() ) {
+		for ( int k=0; k<mCE->tempIBoxList.size(); ++k ) {
+			const int index = k;
+			const int idxJ = mCE->tempJlist[index];
+			std::vector<int> &idxIlist = mCE->tempIBoxList[index];
+			for ( size_t i=0; i<idxIlist.size(); ++i ) {
+				xtIndexTria3 &tria = mSurfI->indices[idxIlist[i]];
+				xtTriangle tri(mSurfI->verts[tria.a[0]],mSurfI->verts[tria.a[1]],mSurfI->verts[tria.a[2]]);
+				tri.TranRot(mSurfI->tran,mSurfI->rot);
+				sceneRoot->addChild( xtOctreeDisplayUtility::RenderTriangle(&tri,xtColor(1.0,.0,.0,1.),false) );
+			}
+			xtIndexTria3 &triaJ = mSurfJ->indices[idxJ];
+			xtTriangle triJ(mSurfJ->verts[triaJ.a[0]],mSurfJ->verts[triaJ.a[1]],mSurfJ->verts[triaJ.a[2]]);
+			triJ.TranRot(mSurfJ->tran,mSurfJ->rot);
+			sceneRoot->addChild( xtOctreeDisplayUtility::RenderTriangle(&triJ,xtColor(0.0,1.0,1.0,1.0),false) );
+		}
+	}
+#endif
+
 }
 
 int xtInterferecenTest::RunScene()

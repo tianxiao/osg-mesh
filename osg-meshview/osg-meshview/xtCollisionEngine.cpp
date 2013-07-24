@@ -43,8 +43,25 @@ bool SearchCallBack(int id, void *arg)
 	return true;
 }
 
+void xtCollisionEngine::SetM4J2I()
+{
+	xtMatrix4d mI;
+	SetMatrix4FromTranRot(mI,mSurfI->tran,mSurfI->rot);
+
+	xtMatrix4d mJ;
+	SetMatrix4FromTranRot(mJ,mSurfJ->tran,mSurfJ->rot);
+
+	xtMatrix4d mj2i = mI.inverse()*mJ;
+
+	AssignM4ToM3(mj2i,rotj2i);
+	AssignColM4ToV3(mj2i,tranj2i,3);
+}
+
+
 bool xtCollisionEngine::Collide()
 {
+	SetM4J2I();
+
 	int nIntersects = 0;
 	std::vector<int> indices;
 	
@@ -53,17 +70,25 @@ bool xtCollisionEngine::Collide()
 		indices.clear();
 		// transformation !!! do
 		xtBBOX box = mJBBoxList[i];
+		box.TranRot(tranj2i,rotj2i);
 		int nhits = mT->tree.Search(&(box.min[0]),&(box.max[0]),SearchCallBack,(void*) &indices);
 		// detailed tri-tri check
 		for ( int j=0; j<nhits; ++j ) {
 			if ( TriTriCollision(indices[j],i) ) {
 				nIntersects++;
 				xtCollidePair pair;
-				pair.i = i; 
-				pair.j = indices[j];
+				pair.i = indices[j];
+				pair.j = i;
 				mCollide.push_back(pair);
 			}
 		}
+#if RTREE_DEBUG_RESULT
+		if (nhits) {
+			tempIBoxList.push_back(indices);
+			tempJlist.push_back(i);
+		}
+#endif
+		
 	}
 	if ( 0<nIntersects ) {
 		return true;
@@ -81,19 +106,22 @@ bool xtCollisionEngine::TriTriCollision(int i, int j)
 	xtVector3d ipb = iverts[itria.a[1]];
 	xtVector3d ipc = iverts[itria.a[2]];
 
-	ipa = mSurfI->tran + mSurfI->rot*ipa;
-	ipb = mSurfI->tran + mSurfI->rot*ipb;
-	ipc = mSurfI->tran + mSurfI->rot*ipc;
+	//ipa = mSurfI->tran + mSurfI->rot*ipa;
+	//ipb = mSurfI->tran + mSurfI->rot*ipb;
+	//ipc = mSurfI->tran + mSurfI->rot*ipc;
 
 	std::vector<xtVector3d> &jverts = mSurfJ->verts;
-	xtIndexTria3 &jtria = mSurfJ->indices[i];
+	xtIndexTria3 &jtria = mSurfJ->indices[j];
 	xtVector3d jpa = jverts[jtria.a[0]];
 	xtVector3d jpb = jverts[jtria.a[1]];
 	xtVector3d jpc = jverts[jtria.a[2]];
 
-	jpa = mSurfJ->tran + mSurfJ->rot*jpa;
-	jpb = mSurfJ->tran + mSurfJ->rot*jpb;
-	jpc = mSurfJ->tran + mSurfJ->rot*jpc;
+	//jpa = mSurfJ->tran + mSurfJ->rot*jpa;
+	//jpb = mSurfJ->tran + mSurfJ->rot*jpb;
+	//jpc = mSurfJ->tran + mSurfJ->rot*jpc;
+	jpa = tranj2i + rotj2i*jpa;
+	jpb = tranj2i + rotj2i*jpb;
+	jpc = tranj2i + rotj2i*jpc;
 
 	float v0[3] = {(float)ipa.x(),(float)ipa.y(),(float)ipa.z()};
 	float v1[3] = {(float)ipb.x(),(float)ipb.y(),(float)ipb.z()};
@@ -105,15 +133,10 @@ bool xtCollisionEngine::TriTriCollision(int i, int j)
 
 	if ( 1==NoDivTriTriIsect(v0,v1,v2,u0,u1,u2) ) {
 		return true;
-		xtCollidePair cp = {i,j};
-		mCollide.push_back(cp);
 	} else {
 		return false;
 	}
 	
-		//;, ipb, ipc;
-	//xtVector3d jpa, jpb, jpc;
-	return false;
 }
 
 void xtCollisionEngine::BuildSurfBBOX()

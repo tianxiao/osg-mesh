@@ -7,6 +7,7 @@
 #include <assert.h>
 #include "xtGeometrySurfaceData.h"
 #include <set>
+#include <algorithm>
 
 
 
@@ -29,9 +30,9 @@ void xtGTSParser::InitialLizeTranRot()
 	mSurface->tran = xtVector3d::Zero();
 	mSurface->rot.Zero();
 	mSurface->rot << 
-		0,0,0,
-		0,0,0,
-		0,0,0;
+		1.0,0,0,
+		0,1.0,0,
+		0,0,1.0;
 }
 
 void xtGTSParser::SetTranRot(xtVector3d *tran, xtMatrix3d *rot) {
@@ -167,6 +168,49 @@ void xtGTSParser::LoadGTS(const char *filename)
 			int a, b, c;
 			parseInt3(a,b,c,token);
 			std::set<int> intset;
+
+			xtIndexTria3 tria;
+			xtEdge edge0, edge1, edge2;
+			edge0 = tempEdges[a-1];
+			edge1 = tempEdges[b-1];
+			edge2 = tempEdges[c-1];
+
+			if ( edge0.a==edge1.a ) {
+				tria.a[0] = edge0.b;
+				tria.a[1] = edge0.a;
+				tria.a[2] = edge1.b;
+			} else if ( edge0.a==edge1.b ){
+				tria.a[0] = edge0.b;
+				tria.a[1] = edge0.a;
+				tria.a[2] = edge1.a;
+			} else if ( edge0.b==edge1.a ) {
+				tria.a[0] = edge0.a;
+				tria.a[1] = edge0.b;
+				tria.a[2] = edge1.b;
+			} else if ( edge0.b==edge1.b ) {
+				tria.a[0] = edge0.a;
+				tria.a[1] = edge0.b;
+				tria.a[2] = edge1.a;
+			} else {
+				assert(false);
+			}
+
+
+			/****
+			if ( edge0.b==edge1.a ) {
+				tria.a[0] = edge0.a;
+				tria.a[1] = edge1.a;
+				tria.a[2] = edge2.a;
+			} else if ( edge0.b==edge2.a ) {
+				tria.a[0] = edge0.a;
+				tria.a[1] = edge2.a;
+				tria.a[2] = edge1.a;
+			} else {
+				assert(false);
+			}
+			****/
+
+			/****
 			intset.insert(tempEdges[a-1].a);intset.insert(tempEdges[a-1].b);
 			intset.insert(tempEdges[a-1].a);intset.insert(tempEdges[a-1].b);
 
@@ -177,15 +221,17 @@ void xtGTSParser::LoadGTS(const char *filename)
 			intset.insert(tempEdges[c-1].a);intset.insert(tempEdges[c-1].b);
 
 			assert(intset.size()==3);
-
+			
 			std::vector<int> setint;//
 			setint.reserve(3);
 			for ( std::set<int>::const_iterator cit=intset.begin();
 				cit!=intset.end(); cit++) {
 					setint.push_back(*cit);
 			}
+			
 
 			xtIndexTria3 tria(setint[0],setint[1],setint[2]);
+			****/
 
 			mSurface->indices.push_back(tria);
 			nf--;
