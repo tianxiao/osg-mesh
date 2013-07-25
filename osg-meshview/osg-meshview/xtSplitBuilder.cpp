@@ -190,8 +190,9 @@ void xtSplitBuilder::ConstructSplitSegments()
 		xtFaceFaceKey ffkey = {fIidx,fJidx};
 		xtFaceFaceKey ffkeyinv = {fJidx, fIidx};
 		xtFFMap::iterator findkey = mFFM.find(ffkey);
-		xtFFMap::iterator findkeyinv = mFFM.find(ffkeyinv);
-		if ( findkey!=mFFM.end() || findkeyinv!=mFFM.end() ) continue;
+		// bug
+		//xtFFMap::iterator findkeyinv = mFFM.find(ffkeyinv);
+		if ( findkey!=mFFM.end() /*|| findkeyinv!=mFFM.end() */) continue;
 		
 		// let J's tri 3 edge test the I's face
 		// 0) may degenerate
@@ -229,7 +230,7 @@ void xtSplitBuilder::ConstructSplitSegments()
 			if ( (findit=mSFMJ.find(key))!=mSFMJ.end() ) {
 				edgestateJ.push_back(true);
 				spJlist.push_back(findit->second);
-			} else if ( (findit=mSFMJ.find(key))!=mSFMJ.end() ) {
+			} else if ( (findit=mSFMJ.find(keyinv))!=mSFMJ.end() ) {
 				edgestateJ.push_back(true);
 				spJlist.push_back(findit->second);
 			} else {
