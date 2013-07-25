@@ -3,6 +3,7 @@
 #include "xtOctreeAdapter.h"
 #include "xtGeometrySurfaceData.h"
 #include "../buildpyramidGeometry/osgcommon.h"
+#include "xtSplitBuilder.h"
 
 xtOctreeDisplayUtil::xtOctreeDisplayUtil(void)
 {
@@ -307,3 +308,158 @@ osg::Geode *xtOctreeDisplayUtility::RenderTriangle(xtTriangle *tri, xtColor colo
 
 	return geode;
 }
+
+osg::Geode *xtOctreeDisplayUtility::RenderSplitSegments(xtSplitBuilder *splitBuilder, xtColor color, float linewidthva)
+{
+	osg::Geode *geode = new osg::Geode;
+
+	osg::Geometry *splitline = new osg::Geometry;
+
+	osg::StateSet *stateset = new osg::StateSet;
+	osg::LineWidth *linewidth = new osg::LineWidth;
+	linewidth->setWidth(linewidthva);
+	stateset->setAttributeAndModes(linewidth,osg::StateAttribute::ON);
+	stateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+
+	splitline->setStateSet(stateset);
+
+    // set the colors as before, plus using the above
+    osg::Vec4Array* colors = new osg::Vec4Array;
+	colors->push_back(osg::Vec4(color.r,color.g,color.b,color.alpha));
+    splitline->setColorArray(colors);
+    splitline->setColorBinding(osg::Geometry::BIND_OVERALL);
+
+	osg::Vec3Array *verts = new osg::Vec3Array;
+	for ( size_t i=0; i<splitBuilder->mSharedSplitSegList.size(); ++i ) {
+		xtVector3d &p0 = *(splitBuilder->mSharedSplitSegList[i]->seg0);
+		xtVector3d &p1 = *(splitBuilder->mSharedSplitSegList[i]->seg1);
+		verts->push_back( osg::Vec3( (float)(p0.x()),(float)(p0.y()),(float)(p0.z())) );
+		verts->push_back( osg::Vec3( (float)(p1.x()),(float)(p1.y()),(float)(p1.z())) );
+	}
+
+	splitline->setVertexArray( verts );
+	splitline->addPrimitiveSet( new osg::DrawArrays(osg::PrimitiveSet::LINES,0,verts->size()) );
+
+	geode->addDrawable(splitline);
+	return geode;
+}
+
+osg::Geode *xtOctreeDisplayUtility::RenderSplitSegmentsWithCyliner(xtSplitBuilder *splitBuilder, xtColor color, float radius/*=4.0*/)
+{
+	osg::Geode *geode = new osg::Geode;
+
+	for ( size_t i=0; i<splitBuilder->mSharedSplitSegList.size(); ++i ) {
+		xtVector3d &p0 = *(splitBuilder->mSharedSplitSegList[i]->seg0);
+		xtVector3d &p1 = *(splitBuilder->mSharedSplitSegList[i]->seg1);
+		geode->addDrawable( new osg::ShapeDrawable( CreateCyliner(p0,p1,radius) ) );
+	}
+
+	// Set the color of the cylinder that extends between the two points.
+	osg::Material *pMaterial = new osg::Material;
+	osg::Vec4 CylinderColor((float)color.r,(float)color.g,(float)color.b,(float)color.alpha);
+	pMaterial->setDiffuse( osg::Material::FRONT, CylinderColor);
+	geode->getOrCreateStateSet()->setAttribute( pMaterial, osg::StateAttribute::OVERRIDE );
+
+
+	return geode;
+}
+
+osg::Geode *xtOctreeDisplayUtility::RednerSplitPntsAsSphere(xtSplitBuilder *splitBuilder, xtColor color, float radius/*=4.0*/)
+{
+	osg::Geode *geode = new osg::Geode;
+
+	for ( size_t i=0; i<splitBuilder->mSharedSplitPoints.size(); ++i ) {
+		xtVector3d &center = *(splitBuilder->mSharedSplitPoints[i]);
+		osg::Sphere *sphere = new osg::Sphere(osg::Vec3(center.x(),center.y(),center.z()),radius);
+		geode->addDrawable( new osg::ShapeDrawable( sphere ) );
+	}
+
+	osg::Material *pMaterial = new osg::Material;
+	osg::Vec4 CylinderColor((float)color.r,(float)color.g,(float)color.b,(float)color.alpha);
+	pMaterial->setDiffuse( osg::Material::FRONT, CylinderColor);
+	geode->getOrCreateStateSet()->setAttribute( pMaterial, osg::StateAttribute::OVERRIDE );
+
+	return geode;
+
+}
+
+/**
+// http://www.thjsmith.com/40/cylinder-between-two-points-opengl-c
+osg::ref_ptr geode = new osg::Geode;
+osg::Vec3 center;
+float height;
+osg::ref_ptr cylinder;
+osg::ref_ptr cylinderDrawable;
+osg::ref_ptr pMaterial;
+
+height = (StartPoint- EndPoint).length();
+center = osg::Vec3( (StartPoint.x() + EndPoint.x()) / 2, (StartPoint.y() + EndPoint.y()) / 2, (StartPoint.z() + EndPoint.z()) / 2);
+
+// This is the default direction for the cylinders to face in OpenGL
+osg::Vec3 z = osg::Vec3(0,0,1);
+
+// Get diff between two points you want cylinder along
+osg::Vec3 p = (StartPoint ¨C EndPoint);
+
+// Get CROSS product (the axis of rotation)
+osg::Vec3 t = z ^ p;
+
+// Get angle. length is magnitude of the vector
+double angle = acos( (z * p) / p.length());
+
+// Create a cylinder between the two points with the given radius
+cylinder = new osg::Cylinder(center,radius,height);
+cylinder->setRotation(osg::Quat(angle, osg::Vec3(t.x(), t.y(), t.z())));
+
+cylinderDrawable = new osg::ShapeDrawable(cylinder );
+geode->addDrawable(cylinderDrawable);
+
+// Set the color of the cylinder that extends between the two points.
+pMaterial = new osg::Material;
+pMaterial->setDiffuse( osg::Material::FRONT, CylinderColor);
+geode->getOrCreateStateSet()->setAttribute( pMaterial, osg::StateAttribute::OVERRIDE );
+
+// Add the cylinder between the two points to an existing group
+pAddToThisGroup->addChild(geode);
+*/
+osg::Cylinder *xtOctreeDisplayUtility::CreateCyliner(xtVector3d &start, xtVector3d &end, double radius)
+{
+	osg::Cylinder *cylin;// = new osg::Cylinder;
+
+	xtVector3d dir = end-start;
+	double height = dir.norm();
+	xtVector3d center = (start+end)/2.0;
+
+	xtVector3d zdir(0.0,0.0,1.0);
+	xtVector3d quaterAxis = dir.cross(zdir)/height;
+
+	double angle = acos(dir.dot(zdir)/height);
+
+	cylin = new osg::Cylinder(osg::Vec3((float)center.x(),(float)center.y(),(float)center.z()), (float)radius, (float)height);
+	
+	cylin->setRotation(osg::Quat( -angle, osg::Vec3((float)quaterAxis.x(), (float)quaterAxis.y(), (float)quaterAxis.z()) ) );
+	
+
+	return cylin;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

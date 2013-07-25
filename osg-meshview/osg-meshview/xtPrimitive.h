@@ -87,6 +87,8 @@ public:
 		pc = tran + rot*pc;
 	}
 
+	xtVector3d *Intersect( xtVector3d &p0, xtVector3d &p1 );
+
 	xtVector3d pa;
 	xtVector3d pb;
 	xtVector3d pc;

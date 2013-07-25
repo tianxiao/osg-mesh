@@ -5,6 +5,7 @@
 #include "../buildpyramidGeometry/osgcommon.h"
 #include "xtCollisionEngine.h"
 #include "xtOctreeDisplayUtil.h"
+#include "xtSplitBuilder.h"
 
 xtInterferecenTest::xtInterferecenTest(void)
 {
@@ -15,11 +16,16 @@ xtInterferecenTest::xtInterferecenTest(void)
 
 
 	sceneRoot = new osg::Group;
+	mSB = NULL;
 }
 
 
 xtInterferecenTest::~xtInterferecenTest(void)
 {
+	if ( mSB!=NULL ) {
+		delete mSB;
+	}
+
 	delete mCE;
 
 	delete this->mGtsparserI;
@@ -51,7 +57,14 @@ void xtInterferecenTest::SetUpScene()
 	if ( mCE->Collide() ) {
 		std::vector<xtCollidePair> &pairs = mCE->GetColliedPairs();
 		sceneRoot->addChild( xtOctreeDisplayUtility::RenderCollided(mSurfI,mSurfJ,pairs) );
+		mSB = new xtSplitBuilder;
+		mSB->SetCE(mCE); mSB->Split();
+		//sceneRoot->addChild( xtOctreeDisplayUtility::RenderSplitSegments(mSB,xtColor(0.0,1.0,1.0,1.0),5.0f) );
+		sceneRoot->addChild( xtOctreeDisplayUtility::RenderSplitSegmentsWithCyliner(mSB,xtColor(0.0,1.0,1.0,1.0),0.005f) );
+		sceneRoot->addChild( xtOctreeDisplayUtility::RednerSplitPntsAsSphere(mSB,xtColor(1.0,0.0,0.0,1.0),0.002f) );
 	}
+
+
 
 #if RTREE_DEBUG_RESULT
 	// RTree results

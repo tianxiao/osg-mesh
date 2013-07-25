@@ -144,6 +144,15 @@
     <ClInclude Include="xtTriTriCollideScene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Vectors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xtRayTriOverlay.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xtSplitBuilder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -240,6 +249,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="xtTriTriCollideScene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtRayTriOverlay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtSplitBuilder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtPrimitive.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -526,6 +526,17 @@ static inline int TestGTSCollisionMoreCompact()
 	return interference.RunScene();
 }
 
+static inline int TestGTSCollisionMoreCompactLittleModel()
+{
+	xtInterferecenTest interference;
+	const char* filename = "D:\\model3d\\gts\\testdata\\dataxy.gts";
+	const char* xzfile   = "D:\\model3d\\gts\\testdata\\dataxz.gts";
+	interference.LoadSurf(filename,xzfile);
+	interference.SetTranRot(new xtVector3d(0.0,0,0),NULL,NULL,NULL);
+
+	return interference.RunScene();
+}
+
 static inline int TestTriTriIntersection()
 {
 	xtTriTriCollideScene tritris;
@@ -544,8 +555,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	//return TestWRLParserTextureDisplay();
 	//return TestGTSParser();
 	//return TestGTSCollision();
-	return TestGTSCollisionMoreCompact();
+	//return TestGTSCollisionMoreCompact();
 	//return TestTriTriIntersection();
+	return TestGTSCollisionMoreCompactLittleModel();
 
 	//return 0;
 }

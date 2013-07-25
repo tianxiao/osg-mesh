@@ -22,9 +22,20 @@ struct xtGeometrySurfaceDataS
 	std::vector<xtIndexTria3> indices;
 	std::vector<xtTriAdjacent> adjs;
 
+	
+
 	xtVector3d tran;
 	xtMatrix3d rot;
 };
+
+static inline xtVector3d GetWorldCoordinate( xtGeometrySurfaceDataS *surf, const int idx ) 
+{
+	assert(idx>=0);
+	assert(idx<surf->verts.size());
+	xtVector3d temp =surf->verts[idx];
+	temp = surf->tran + surf->rot*temp;
+	return temp;
+}
 
 
 class xtPointsTria

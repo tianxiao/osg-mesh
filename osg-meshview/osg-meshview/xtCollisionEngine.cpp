@@ -43,24 +43,43 @@ bool SearchCallBack(int id, void *arg)
 	return true;
 }
 
+void SetM4Tran2(xtVector3d &tran0, xtMatrix3d &rot0, xtVector3d &tran1, xtMatrix3d &rot1, xtMatrix4d &rlt120 )
+{
+	xtMatrix4d m0;
+	SetMatrix4FromTranRot(m0,tran0,rot0);
+
+	xtMatrix4d m1;
+	SetMatrix4FromTranRot(m1,tran1,rot1);
+
+	rlt120 = m0.inverse()*m1;
+
+	//AssignM4ToM3(mj2i,rotj2i);
+	//AssignColM4ToV3(mj2i,tranj2i,3);
+}
+
 void xtCollisionEngine::SetM4J2I()
 {
-	xtMatrix4d mI;
-	SetMatrix4FromTranRot(mI,mSurfI->tran,mSurfI->rot);
-
-	xtMatrix4d mJ;
-	SetMatrix4FromTranRot(mJ,mSurfJ->tran,mSurfJ->rot);
-
-	xtMatrix4d mj2i = mI.inverse()*mJ;
+	xtMatrix4d mj2i;
+	SetM4Tran2(mSurfI->tran,mSurfI->rot,mSurfJ->tran,mSurfJ->rot,mj2i);
 
 	AssignM4ToM3(mj2i,rotj2i);
 	AssignColM4ToV3(mj2i,tranj2i,3);
+}
+
+void xtCollisionEngine::SetM4I2J()
+{
+	xtMatrix4d mi2j;
+	SetM4Tran2(mSurfJ->tran,mSurfJ->rot,mSurfI->tran,mSurfI->rot,mi2j);
+
+	AssignM4ToM3(mi2j,roti2j);
+	AssignColM4ToV3(mi2j,trani2j,3);
 }
 
 
 bool xtCollisionEngine::Collide()
 {
 	SetM4J2I();
+	SetM4I2J();
 
 	int nIntersects = 0;
 	std::vector<int> indices;
@@ -80,6 +99,9 @@ bool xtCollisionEngine::Collide()
 				pair.i = indices[j];
 				pair.j = i;
 				mCollide.push_back(pair);
+
+				// Detail split the triangle
+
 			}
 		}
 #if RTREE_DEBUG_RESULT

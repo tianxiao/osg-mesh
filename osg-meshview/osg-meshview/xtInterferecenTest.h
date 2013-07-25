@@ -9,6 +9,7 @@ namespace osg
 class xtGTSParser;
 struct xtGeometrySurfaceDataS;
 class xtCollisionEngine;
+class xtSplitBuilder;
 class xtInterferecenTest
 {
 public:
@@ -27,7 +28,10 @@ private:
 	xtGeometrySurfaceDataS *mSurfJ;
 	xtGTSParser *mGtsparserI, *mGtsparserJ;
 
+	// Broad & mediate phase
 	xtCollisionEngine *mCE;
+	// Detail split pahse
+	xtSplitBuilder *mSB;
 
 	osg::Group *sceneRoot;
 };

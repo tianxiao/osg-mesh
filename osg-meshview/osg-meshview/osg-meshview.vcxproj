@@ -93,6 +93,7 @@
     <ClInclude Include="txFemSurf.h" />
     <ClInclude Include="Vec2.h" />
     <ClInclude Include="Vec3.h" />
+    <ClInclude Include="Vectors.h" />
     <ClInclude Include="xtCollisionEngine.h" />
     <ClInclude Include="xtConvertUtil.h" />
     <ClInclude Include="xtDebutUtil.h" />
@@ -110,7 +111,9 @@
     <ClInclude Include="xtOctreeScene.h" />
     <ClInclude Include="xtPrimitive.h" />
     <ClInclude Include="xtPrimitiveTestUtil.h" />
+    <ClInclude Include="xtRayTriOverlay.h" />
     <ClInclude Include="xtSectionOctree.h" />
+    <ClInclude Include="xtSplitBuilder.h" />
     <ClInclude Include="xtTinyIMPL.h" />
     <ClInclude Include="xtTriangleBox3Overlap.h" />
     <ClInclude Include="xtTriTriCollideScene.h" />
@@ -146,8 +149,11 @@
     <ClCompile Include="xtOctreeDisplayUtil.cpp" />
     <ClCompile Include="xtOctreeNode.cpp" />
     <ClCompile Include="xtOctreeScene.cpp" />
+    <ClCompile Include="xtPrimitive.cpp" />
     <ClCompile Include="xtPrimitiveTestUtil.cpp" />
+    <ClCompile Include="xtRayTriOverlay.cpp" />
     <ClCompile Include="xtSectionOctree.cpp" />
+    <ClCompile Include="xtSplitBuilder.cpp" />
     <ClCompile Include="xtTinyIMPL.cpp" />
     <ClCompile Include="xtTriangleBox3Overlap.cpp" />
     <ClCompile Include="xtTriTriCollideScene.cpp" />

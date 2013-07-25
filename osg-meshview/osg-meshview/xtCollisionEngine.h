@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <queue>
+#include <map>
 #include "xtPrimitive.h"
 
 struct xtRtreeImp;
@@ -8,10 +9,12 @@ struct xtGeometrySurfaceDataS;
 
 #define RTREE_DEBUG_RESULT 0
 
+
+
 class xtCollisionEngine
 {
 	friend class xtInterferecenTest;
-
+	friend class xtSplitBuilder;
 public:
 	xtCollisionEngine(void);
 	~xtCollisionEngine(void);
@@ -32,6 +35,7 @@ private:
 	void BuildSurfBBOX();
 	void BuildRTree();
 	void SetM4J2I();
+	void SetM4I2J();
 
 	bool TriTriCollision(int i, int j);
 
@@ -47,6 +51,9 @@ private:
 
 	xtVector3d tranj2i; 
 	xtMatrix3d rotj2i; 
+
+	xtVector3d trani2j; 
+	xtMatrix3d roti2j; 
 
 
 	// For debug

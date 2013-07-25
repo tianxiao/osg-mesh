@@ -11,11 +11,14 @@ public:
 };
 
 struct xtGeometrySurfaceDataS;
+class xtSplitBuilder;
 namespace osg
 {
 	class Geode;
 	class Node;
+	class Cylinder;
 };
+
 namespace xtOctreeDisplayUtility
 {
 	
@@ -32,4 +35,12 @@ namespace xtOctreeDisplayUtility
 	osg::Geode *RenderCollideList(xtGeometrySurfaceDataS *surface, std::vector<int> &index, xtColor color, bool isWireFrame=true);
 
 	osg::Geode *RenderTriangle(xtTriangle *tri, xtColor color, bool wirefrme=true);
+
+	osg::Geode *RenderSplitSegments(xtSplitBuilder *splitBuilder, xtColor color, float linewidth=4.0);
+
+	osg::Geode *RednerSplitPntsAsSphere(xtSplitBuilder *splitBuilder, xtColor color, float linewidth=4.0);
+
+	osg::Geode *RenderSplitSegmentsWithCyliner(xtSplitBuilder *splitBuilder, xtColor color, float linewidth=4.0);
+
+	osg::Cylinder *CreateCyliner(xtVector3d &start, xtVector3d &end, double radius);
 };
