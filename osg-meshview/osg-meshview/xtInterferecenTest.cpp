@@ -51,8 +51,8 @@ void xtInterferecenTest::SetTranRot(xtVector3d *tranI, xtMatrix3d *rotI, xtVecto
 
 void xtInterferecenTest::SetUpScene()
 {
-	sceneRoot->addChild(mGtsparserI->CreateSceneWithTranRot());
-	sceneRoot->addChild(mGtsparserJ->CreateSceneWithTranRot());
+	//sceneRoot->addChild(mGtsparserI->CreateSceneWithTranRot());
+	//sceneRoot->addChild(mGtsparserJ->CreateSceneWithTranRot());
 
 	if ( mCE->Collide() ) {
 		std::vector<xtCollidePair> &pairs = mCE->GetColliedPairs();

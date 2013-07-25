@@ -555,9 +555,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	//return TestWRLParserTextureDisplay();
 	//return TestGTSParser();
 	//return TestGTSCollision();
-	//return TestGTSCollisionMoreCompact();
+	return TestGTSCollisionMoreCompact();
 	//return TestTriTriIntersection();
-	return TestGTSCollisionMoreCompactLittleModel();
+	//return TestGTSCollisionMoreCompactLittleModel();
 
 	//return 0;
 }
