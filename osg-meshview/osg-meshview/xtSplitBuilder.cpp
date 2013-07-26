@@ -4,6 +4,7 @@
 #include "xtGeometrySurfaceData.h"
 #include "xtRayTriOverlay.h"
 #include <algorithm>
+#include "xtLog.h"
 
 void xtCollisionEntity::DestroyMem()
 {
@@ -157,12 +158,17 @@ void xtSplitBuilder::SplitPnt(xtCollisionEntity *psI, xtCollisionEntity *psJ, xt
 					double t,u,v;
 					xtVector3d dir = (endPntJ-startPntJ);
 					dir.normalize();
+					//printf("Ray Direction x:%f,\ty:%f\tz:%f\n",dir.x(),dir.y(),dir.z());
+					g_log_file << "++"<< eidx << "\t" <<  dir.x() << "\t" <<dir.y() << "\t" << dir.z() << '\n' ; 
+
 					if ( IntersectTriangleTemplate(startPntJ, dir,pa,pb,pc,&t,&u,&v) ) {
 						xtVector3d *newsplitPnt = new xtVector3d(startPntJ+t*dir);
 						mSharedSplitPoints.push_back(newsplitPnt);
 						currssI->pointsOnSurf.push_back(newsplitPnt);
 						colledseg->pointOnSeg.push_back(newsplitPnt);
 						sfmap[key]=newsplitPnt;
+						//printf("Point On Parameters %f\t%f\t%f\t\n",t,u,v);
+						g_log_file << "--"<< eidx << "\t" << t << '\t' << u << '\t' << v << '\n';
 					}
 				}
 			}
@@ -285,10 +291,54 @@ void xtSplitBuilder::ConstructSplitSegments()
 
 			mFFM[ffkey] = newseg;
 			
+		} else if ( 3==numIntersectWI&&0==numIntersectWJ) {
+			printf( "Co point I\n" );
+
+		} else if ( 0==numIntersectWI&&3==numIntersectWJ) {
+			printf( "Co point J\n" );
+
+		} else if ( 2==numIntersectWI&&1==numIntersectWJ) {
+			//printf( "I touch on\n" ); 
+			// one point of I on triangle J
+			// There at least two edge intersect with J degenerate case
+			std::vector<bool>::iterator findIit = std::find(edgestateI.begin(),edgestateI.end(),false);
+			const size_t falseIidx = std::distance(edgestateI.begin(),findIit);
+			
+			std::vector<bool>::iterator findJit = std::find(edgestateJ.begin(),edgestateJ.end(),true);
+			const size_t trueJidx = std::distance(edgestateJ.begin(),findJit);
+
+			xtSegment *newseg = new xtSegment;
+			newseg->seg0 = spIlist[(falseIidx+1)%3];
+			newseg->seg1 = spJlist[trueJidx];
+			mSharedSplitSegList.push_back(newseg);
+
+			mFFM[ffkey] = newseg;
+
+		} else if ( 1==numIntersectWI&&2==numIntersectWJ) {
+			//printf( "J touch on\n" );
+			// one point of J on triangle area I
+			// There at lease two edge intersect by this degenerate case
+			// In this branch just one edge collision
+			std::vector<bool>::iterator findIit = std::find(edgestateI.begin(),edgestateI.end(),true);
+			const size_t trueIidx = std::distance(edgestateI.begin(),findIit);
+			
+			std::vector<bool>::iterator findJit = std::find(edgestateJ.begin(),edgestateJ.end(),false);
+			const size_t falseJidx = std::distance(edgestateJ.begin(),findJit);
+
+			xtSegment *newseg = new xtSegment;
+			newseg->seg0 = spIlist[trueIidx];
+			newseg->seg1 = spJlist[(falseJidx+1)%3];
+			mSharedSplitSegList.push_back(newseg);
+
+			mFFM[ffkey] = newseg;
+
 		} else if ( 3==numIntersectWI ) {
 			// impossible if they are not lay int the same plane
 			assert(false);
-		} 
+		}  else {
+			// unknow situation
+			printf( "I\t%d, J\t%d\n",numIntersectWI,numIntersectWJ);
+		}
 
 
 	}

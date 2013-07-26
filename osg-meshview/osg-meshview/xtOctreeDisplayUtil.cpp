@@ -220,8 +220,32 @@ osg::Node *xtOctreeDisplayUtility::RenderCollided(xtGeometrySurfaceDataS *surfac
 	}
 
 	osg::Group *cpnode = new osg::Group;
-	cpnode->addChild(RenderCollideList(surfaceI,cpI,xtColor(0.5,0.5,0.0,1.),false));
+	osg::Geode *transparent = RenderCollideList(surfaceI,cpI,xtColor(0.5,0.5,0.0,1.),false);
+	if ( true ) {
+		osg::StateSet *state2 = new osg::StateSet();
+		state2->setMode( GL_BLEND, osg::StateAttribute::ON );
+		state2->setRenderingHint( osg::StateSet::TRANSPARENT_BIN );
+
+		// Enable depth test so that an opaque polygon will occlude a transparent one behind it.
+		state2->setMode( GL_DEPTH_TEST, osg::StateAttribute::ON );
+
+		// Conversely, disable writing to depth buffer so that
+		// a transparent polygon will allow polygons behind it to shine thru.
+		// OSG renders transparent polygons after opaque ones.
+		osg::Depth* depth = new osg::Depth;
+		depth->setWriteMask( false );
+		state2->setAttributeAndModes( depth, osg::StateAttribute::ON );
+ 
+		// Disable conflicting modes.
+		state2->setMode( GL_LIGHTING, osg::StateAttribute::OFF );
+		transparent->setStateSet(state2);
+	}
+	cpnode->addChild(transparent);
 	cpnode->addChild(RenderCollideList(surfaceJ,cpJ,xtColor(0.5,0.0,0.5,1.),false));
+	cpnode->addChild(RenderCollideList(surfaceI,cpI,xtColor(0.0,0.0,0.0,1.)));
+	cpnode->addChild(RenderCollideList(surfaceJ,cpJ,xtColor(0.0,0.0,0.0,1.)));
+	
+	
 	cpnode->setName("Collision Pair");
 
 	return cpnode;
