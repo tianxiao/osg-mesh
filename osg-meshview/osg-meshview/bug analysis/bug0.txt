@@ -1,0 +1,4 @@
+This bug is cause by the segment triangle checking
+I just use the ray (original point and the direction)
+I din't check if the percing point is beyong the segment region ( start end point)
+Should add a check t weather it reside on or less or longer thant the (point-start).length
