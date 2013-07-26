@@ -157,18 +157,27 @@ void xtSplitBuilder::SplitPnt(xtCollisionEntity *psI, xtCollisionEntity *psJ, xt
 					
 					double t,u,v;
 					xtVector3d dir = (endPntJ-startPntJ);
-					dir.normalize();
+					const double dirlength = dir.norm();
+					if ( dirlength < 0.00001 ) {
+						printf("May De:%f\n",dirlength);
+					}
+					dir/=dirlength;
+					//dir.normalize();
 					//printf("Ray Direction x:%f,\ty:%f\tz:%f\n",dir.x(),dir.y(),dir.z());
 					g_log_file << "++"<< eidx << "\t" <<  dir.x() << "\t" <<dir.y() << "\t" << dir.z() << '\n' ; 
 
 					if ( IntersectTriangleTemplate(startPntJ, dir,pa,pb,pc,&t,&u,&v) ) {
-						xtVector3d *newsplitPnt = new xtVector3d(startPntJ+t*dir);
-						mSharedSplitPoints.push_back(newsplitPnt);
-						currssI->pointsOnSurf.push_back(newsplitPnt);
-						colledseg->pointOnSeg.push_back(newsplitPnt);
-						sfmap[key]=newsplitPnt;
-						//printf("Point On Parameters %f\t%f\t%f\t\n",t,u,v);
-						g_log_file << "--"<< eidx << "\t" << t << '\t' << u << '\t' << v << '\n';
+						if ( dirlength>=t && t>=0) {
+							xtVector3d *newsplitPnt = new xtVector3d(startPntJ+t*dir);
+							mSharedSplitPoints.push_back(newsplitPnt);
+							currssI->pointsOnSurf.push_back(newsplitPnt);
+							colledseg->pointOnSeg.push_back(newsplitPnt);
+							sfmap[key]=newsplitPnt;
+							//printf("Point On Parameters %f\t%f\t%f\t\n",t,u,v);
+							g_log_file << "--"<< eidx << "\t" << t << '\t' << u << '\t' << v << '\n';
+							xtRaySegment rayseg = {startPntJ,*newsplitPnt,endPntJ};
+							mDebugedge.push_back(rayseg);
+						}
 					}
 				}
 			}

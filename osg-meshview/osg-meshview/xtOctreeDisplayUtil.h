@@ -40,6 +40,8 @@ namespace xtOctreeDisplayUtility
 
 	osg::Geode *RednerSplitPntsAsSphere(xtSplitBuilder *splitBuilder, xtColor color, float linewidth=4.0);
 
+	osg::Geode *RenderRaySegment(xtSplitBuilder *sb);
+
 	osg::Geode *RenderSplitSegmentsWithCyliner(xtSplitBuilder *splitBuilder, xtColor color, float linewidth=4.0);
 
 	osg::Cylinder *CreateCyliner(xtVector3d &start, xtVector3d &end, double radius);

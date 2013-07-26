@@ -388,6 +388,35 @@ osg::Geode *xtOctreeDisplayUtility::RenderSplitSegmentsWithCyliner(xtSplitBuilde
 	return geode;
 }
 
+osg::Geode *xtOctreeDisplayUtility::RenderRaySegment(xtSplitBuilder *sb)
+{
+	const float radiussp = 0.002;
+	const float radisucy = radiussp/2.;
+	const xtColor color(0.0,1.0,0.0,1.0);
+
+	osg::Geode *geode = new osg::Geode;
+
+	for ( size_t i=0; i<sb->mDebugedge.size(); ++i ) {
+		xtVector3d &startPnt = sb->mDebugedge[i].start;
+		xtVector3d &endPnt   = sb->mDebugedge[i].end;
+		xtVector3d &oriPnt   = sb->mDebugedge[i].oriend;
+		osg::Vec3 sp((float)startPnt.x(),(float)startPnt.y(),(float)startPnt.z());
+		osg::Vec3 ep((float)endPnt.x(),(float)endPnt.y(),(float)endPnt.z());
+		osg::Sphere *sphere = new osg::Sphere( sp , radiussp );
+		geode->addDrawable( new osg::ShapeDrawable(sphere) );
+		geode->addDrawable( new osg::ShapeDrawable( CreateCyliner(startPnt,endPnt,radisucy)) );
+		geode->addDrawable( new osg::ShapeDrawable( CreateCyliner(endPnt, oriPnt, radisucy/2.)) );
+	}
+
+	osg::Material *pMaterial = new osg::Material;
+	osg::Vec4 CylinderColor((float)color.r,(float)color.g,(float)color.b,(float)color.alpha);
+	pMaterial->setDiffuse( osg::Material::FRONT, CylinderColor);
+	geode->getOrCreateStateSet()->setAttribute( pMaterial, osg::StateAttribute::OVERRIDE );
+
+	return geode;
+}
+
+
 osg::Geode *xtOctreeDisplayUtility::RednerSplitPntsAsSphere(xtSplitBuilder *splitBuilder, xtColor color, float radius/*=4.0*/)
 {
 	osg::Geode *geode = new osg::Geode;

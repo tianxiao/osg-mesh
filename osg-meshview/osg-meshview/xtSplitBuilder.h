@@ -2,6 +2,7 @@
 #include "linearmathcom.h"
 #include <vector>
 #include <map>
+#include <tuple>
 #include "xtPrimitive.h"
 
 struct xtSegmentKey
@@ -116,6 +117,16 @@ namespace xtOctreeDisplayUtility
 	osg::Geode * RenderSplitSegments(xtSplitBuilder *, xtColor color, float linewidth);
 	osg::Geode *RenderSplitSegmentsWithCyliner(xtSplitBuilder *splitBuilder, xtColor color, float linewidth/*=4.0*/);
 	osg::Geode *RednerSplitPntsAsSphere(xtSplitBuilder *splitBuilder, xtColor color, float linewidth/*=4.0*/);
+	osg::Geode *RenderRaySegment(xtSplitBuilder *sb);
+};
+
+//typedef std::tuple<xtVector3d, xtVector3d> xtRaySegment;
+// the above Eigen and stl conflicts
+struct xtRaySegment
+{
+	xtVector3d start;
+	xtVector3d end;
+	xtVector3d oriend;
 };
 
 class xtCollisionEngine;
@@ -126,6 +137,7 @@ class xtSplitBuilder
 	friend osg::Geode * xtOctreeDisplayUtility::RenderSplitSegments(xtSplitBuilder *, xtColor color, float linewidth);
 	friend osg::Geode * xtOctreeDisplayUtility::RenderSplitSegmentsWithCyliner(xtSplitBuilder *splitBuilder, xtColor color, float linewidth/*=4.0*/);
 	friend osg::Geode * xtOctreeDisplayUtility::RednerSplitPntsAsSphere(xtSplitBuilder *splitBuilder, xtColor color, float linewidth/*=4.0*/);
+	friend osg::Geode * xtOctreeDisplayUtility::RenderRaySegment(xtSplitBuilder *sb);
 	typedef std::map<xtSegmentFaceK, xtVector3d *, xtSegFaceComp> xtSFMap;
 	typedef std::map<xtFaceFaceKey, xtSegment *, xtFaceFaceKeyComp> xtFFMap;
 public:
@@ -161,6 +173,12 @@ private:
 	xtCollisionEntity *mPSJ;
 
 	//======================================================================================
+	// only for debug
+	
+	std::vector<xtRaySegment> mDebugedge;
 
 };
+
+//stl tuple
+//http://msdn.microsoft.com/en-us/library/bb982771.aspx
 
