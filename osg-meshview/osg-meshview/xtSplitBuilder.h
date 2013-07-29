@@ -5,6 +5,8 @@
 #include <tuple>
 #include "xtPrimitive.h"
 
+#define XT_DEBUG_PERCE_POINT 0;
+
 struct xtSegmentKey
 {
 	int pi0;
@@ -73,7 +75,55 @@ struct xtSurfaceSlot
 
 	//====================================
 	std::vector<xtVector3d *> pointsOnSurf;
-	std::vector<xtSegment *> seglist;
+	std::vector<xtVector3d *> pointsOnSurfVerbos;  // same as pointsOnSurf in case miss
+	std::vector<xtSegment *> segsonsurf;
+	std::vector<xtIndexTria3 > tris;  
+	// pre 3 is the tirangle idx should be reference to the surface data
+	// for 3- is the local segment data should reference the the pointsOnSurfVerbos
+};
+
+struct xtSegmentVertexPointerKey
+{
+	xtVector3d *vert;
+	xtSegment *vbseg; // segment hold vert;
+};
+
+inline bool xtSegmentVertexPointerKeyComp(xtSegmentVertexPointerKey *key0, xtSegmentVertexPointerKey *key1)
+{
+	return (key0->vert-key1->vert)?true:false;
+}
+
+class xtOrderSegSuquence
+{
+public:
+	~xtOrderSegSuquence();
+	void OrderSequence(std::vector<xtSegment *> &segs) ;
+	void OrderSequenceSlow( std::vector<xtSegment *> &segs );
+
+private:
+	std::vector<xtSegmentVertexPointerKey *> seq;
+	std::vector<xtVector3d *> verts;
+	std::vector<int> sequence;
+};
+
+struct xtPntSlotKeyComp
+{
+	bool operator()(xtVector3d *left, xtVector3d *right) 
+	{
+		return (left-right)<0;
+	}
+};
+
+typedef std::map<xtVector3d *, int, xtPntSlotKeyComp> xtPntSlotMap;
+
+class xtSegmentPointer2Index
+{
+public:
+	void IndexPointer(std::vector<xtSegment *> &segps, 
+		std::vector<xtVector3d *> &verts,
+		std::vector<std::tuple<int,int>> &segis);
+private:
+
 };
 
 enum xtSurfaceCat
@@ -96,6 +146,8 @@ public:
 	}
 
 	void InitializeCollisionEntity(xtGeometrySurfaceDataS *surf, std::vector<xtCollidePair> &pairs, xtSurfaceCat surfcat);
+	void AddSplitSegmentToFace(const int fi, xtSegment *seg);
+
 
 private:
 	void DestroyMem();
@@ -151,7 +203,6 @@ public:
 private:
 	void ConstructSplitSegments();
 	void SplitPnt(xtCollisionEntity *psI, xtCollisionEntity *psJ, xtSFMap &sfmap, xtGeometrySurfaceDataS *surfI, xtGeometrySurfaceDataS *surfJ);
-	void SplitPntRelative(xtCollisionEntity *psI, xtCollisionEntity *psJ, xtSFMap &sfmap, xtGeometrySurfaceDataS *surfI, xtGeometrySurfaceDataS *surfJ);
 	void TessellateCollidedFace(xtCollisionEntity *ps, xtGeometrySurfaceDataS *surf);
 	void InitializeCollisionEntity();
 	void DestroyMem();
@@ -166,6 +217,8 @@ private:
 	xtSFMap mSFMI;
 	xtSFMap mSFMJ;
 	xtFFMap mFFM;
+	// This shared split points between surface I and surface J is in the world framwork
+	// So Need a inverse tran
 	std::vector<xtVector3d *> mSharedSplitPoints;
 	std::vector<xtSegment *>  mSharedSplitSegList;
 
@@ -174,8 +227,9 @@ private:
 
 	//======================================================================================
 	// only for debug
-	
+#if XT_DEBUG_PERCE_POINT
 	std::vector<xtRaySegment> mDebugedge;
+#endif
 
 };
 

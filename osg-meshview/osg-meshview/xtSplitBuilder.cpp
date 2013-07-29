@@ -5,6 +5,7 @@
 #include "xtRayTriOverlay.h"
 #include <algorithm>
 #include "xtLog.h"
+#include "./trianglev2/xtTrianglePLSG.h"
 
 void xtCollisionEntity::DestroyMem()
 {
@@ -59,6 +60,13 @@ void xtCollisionEntity::InitializeCollisionEntity(xtGeometrySurfaceDataS *surf, 
 		
 		surfslot.push_back(ss);
 	}
+}
+
+void xtCollisionEntity::AddSplitSegmentToFace(const int fi, xtSegment *seg)
+{
+	xtSurfaceSlot *ss = GetFaceSlotExit(fi);
+	assert(ss);
+	ss->segsonsurf.push_back(seg);
 }
 
 xtSurfaceSlot *xtCollisionEntity::GetFaceSlotExit(int fi)
@@ -121,6 +129,8 @@ void xtSplitBuilder::Split()
 	SplitPnt(mPSI,mPSJ,mSFMI,mCE->mSurfI,mCE->mSurfJ);
 	SplitPnt(mPSJ,mPSI,mSFMJ,mCE->mSurfJ,mCE->mSurfI);
 	ConstructSplitSegments();
+	TessellateCollidedFace(mPSI,mCE->mSurfI);
+	TessellateCollidedFace(mPSJ,mCE->mSurfJ);
 }
 
 void xtSplitBuilder::SplitPnt(xtCollisionEntity *psI, xtCollisionEntity *psJ, xtSFMap &sfmap, xtGeometrySurfaceDataS *surfI, xtGeometrySurfaceDataS *surfJ)
@@ -175,8 +185,10 @@ void xtSplitBuilder::SplitPnt(xtCollisionEntity *psI, xtCollisionEntity *psJ, xt
 							sfmap[key]=newsplitPnt;
 							//printf("Point On Parameters %f\t%f\t%f\t\n",t,u,v);
 							g_log_file << "--"<< eidx << "\t" << t << '\t' << u << '\t' << v << '\n';
+#if XT_DEBUG_PERCE_POINT
 							xtRaySegment rayseg = {startPntJ,*newsplitPnt,endPntJ};
 							mDebugedge.push_back(rayseg);
+#endif
 						}
 					}
 				}
@@ -185,11 +197,202 @@ void xtSplitBuilder::SplitPnt(xtCollisionEntity *psI, xtCollisionEntity *psJ, xt
 	}
 }
 
+xtOrderSegSuquence::~xtOrderSegSuquence()
+{
+	for ( size_t i=0; i<seq.size(); ++i ) {
+		delete seq[i];
+		seq[i] = NULL;
+	} 
+}
+
+void xtOrderSegSuquence::OrderSequence(std::vector<xtSegment *> &segs) 
+{
+	xtSegmentVertexPointerKey *key;
+	for ( size_t i=0; i<segs.size(); ++i ) {
+		key = new xtSegmentVertexPointerKey;
+		key->vert = segs[i]->seg0;
+		key->vbseg = segs[i];
+		seq.push_back(key);
+
+		key = new xtSegmentVertexPointerKey;
+		key->vert = segs[i]->seg1;
+		key->vbseg = segs[i];
+		seq.push_back(key);
+	}
+	std::sort(seq.begin(),seq.end(),xtSegmentVertexPointerKeyComp);
+
+	const int seqsize = seq.size();
+	std::vector<xtSegmentVertexPointerKey *> startend;
+	std::vector<int> startendidx;
+	int interseqcount = 0;
+	for ( size_t i=0; i<seq.size()-1; ++i ) {
+		xtSegmentVertexPointerKey  *right, *mid;
+		mid = seq[i];
+		right = seq[i+1];
+
+		if ( right==mid ) {
+			verts.push_back(mid->vert);
+			sequence.push_back(interseqcount++);
+			i++;
+			continue;
+		}
+
+		if ( right!=mid ) {
+			startend.push_back(mid);
+			startendidx.push_back(i);
+			continue;
+		}
+	}
+
+	// concate the sequence;
+	
+}
+
+
+void xtOrderSegSuquence::OrderSequenceSlow( std::vector<xtSegment *> &segs )
+{
+	std::vector<xtSegmentVertexPointerKey *> seq;
+}
+
+
+void xtSegmentPointer2Index::IndexPointer(std::vector<xtSegment *> &segs,
+			std::vector<xtVector3d *> &verts,
+		std::vector<std::tuple<int,int>> &segis)
+{
+	
+	xtPntSlotMap vmap;
+	int vertcount=0;
+	for ( size_t i=0; i<segs.size(); ++i ) {
+		std::tuple<int,int> intseg;
+		xtSegment *seg = segs[i];
+		xtPntSlotMap::iterator fsid = vmap.find( seg->seg0 );
+		if ( fsid!=vmap.end() ) {
+			std::get<0>(intseg) = fsid->second;
+		} else {
+			std::get<0>(intseg) = vertcount;
+			vmap.insert( std::pair<xtVector3d*,int>(seg->seg0,vertcount++) );
+		}
+		xtPntSlotMap::iterator feid = vmap.find( seg->seg1 );
+		if ( feid!=vmap.end() ) {
+			std::get<1>( intseg ) = feid->second;
+		} else {
+			std::get<1>( intseg ) = vertcount;
+			vmap.insert( std::pair<xtVector3d*,int>(seg->seg1,vertcount++) );
+		}
+
+		segis.push_back( intseg );
+	}
+	std::vector<int> idxcache;
+	for ( xtPntSlotMap::iterator it=vmap.begin(); it!=vmap.end(); ++it ) {
+		idxcache.push_back(it->second);
+		verts.push_back(it->first);
+	}
+
+	std::sort( idxcache.begin(), idxcache.end() );
+
+	for ( size_t i=0; i<idxcache.size()/2; ++i ) {
+		std::swap( verts[i], verts[idxcache[i]] );
+	}
+}
 
 
 void xtSplitBuilder::TessellateCollidedFace(xtCollisionEntity *ps, xtGeometrySurfaceDataS *surf)
 {
-	
+	for ( size_t ssidx=0; ssidx<ps->surfslot.size(); ++ssidx ) {
+		xtSurfaceSlot *ss = ps->surfslot[ssidx];
+		
+		std::vector<int> vertidxmap;
+
+		xtIndexTria3 &triaI = surf->indices[ss->idx];
+		xtVector3d pa = GetWorldCoordinate(surf,triaI.a[0]);//surfI->verts[triaI.a[0]];
+		xtVector3d pb = GetWorldCoordinate(surf,triaI.a[1]);//surfI->verts[triaI.a[1]];
+		xtVector3d pc = GetWorldCoordinate(surf,triaI.a[2]);//surfI->verts[triaI.a[2]];
+		vertidxmap.push_back(triaI.a[0]);
+		vertidxmap.push_back(triaI.a[1]);
+		vertidxmap.push_back(triaI.a[2]);
+
+		// construct local coordinate
+		xtVector3d pba = pb - pa;
+		xtVector3d pca = pc - pa;
+		xtVector3d norm = pca.cross(pba);
+		norm.normalize();
+		xtVector3d xcoord = pca.cross(norm);
+		xcoord.normalize();
+		xtVector3d ycoord = norm.cross(xcoord);
+
+		//xtMatrix3d rotm(
+		//	xcoord.x(),ycoord.x(),norm.x(),
+		//	xcoord.y(),ycoord.y(),norm.y(),
+		//	xcoord.z(),ycoord.z(),norm.z());
+		xtMatrix3d rotm;
+		//rotm << xcoord.x(),ycoord.x(),norm.x(),
+		//	xcoord.y(),ycoord.y(),norm.y(),
+		//	xcoord.z(),ycoord.z(),norm.z() ;
+		rotm << 
+			xcoord.x(), xcoord.y(), xcoord.z(),
+			ycoord.x(), ycoord.y(), ycoord.z(),
+			norm.x(), norm.y(), norm.z();
+
+
+		std::vector<xtVector3d *> &segonsurfverts = ss->pointsOnSurfVerbos;
+		std::vector<std::tuple<int,int>> segonsurfindices;
+		xtSegmentPointer2Index indexsegonsurf;
+		indexsegonsurf.IndexPointer(ss->segsonsurf,segonsurfverts,segonsurfindices);
+		
+		std::vector<xtTriPnt2> verts2d;
+		std::vector<xtSeg2WithMarker> segmarkerlist;
+		std::vector<xtTriIndexO> outtris;
+
+		// pack triangle boundary
+		xtVector3d pa2d = rotm*pa;
+		xtVector3d pb2d = rotm*pb;
+		xtVector3d pc2d = rotm*pc;
+		xtTriPnt2 a2d = { pa2d.x(), pa2d.y() };
+		xtTriPnt2 b2d = { pb2d.x(), pb2d.y() };
+		xtTriPnt2 c2d = { pc2d.x(), pc2d.y() };
+		verts2d.push_back(a2d);
+		verts2d.push_back(b2d);
+		verts2d.push_back(c2d);
+		xtSeg2WithMarker segmarker;
+		segmarker.seg[0] = 0;
+		segmarker.seg[1] = 1;
+		segmarker.marker = 0;
+		segmarkerlist.push_back(segmarker);
+		segmarker.seg[0] = 1;
+		segmarker.seg[1] = 2;
+		segmarker.marker = 0;
+		segmarkerlist.push_back(segmarker);
+		segmarker.seg[0] = 2;
+		segmarker.seg[1] = 0;
+		segmarker.marker = 0;
+		segmarkerlist.push_back(segmarker);
+
+		// pack seg on triangle surf
+		for ( size_t i=0; i<segonsurfverts.size(); ++i ) {
+			xtVector3d p2d = rotm*(*(segonsurfverts[i]));
+			xtTriPnt2 d2 = { p2d.x(), p2d.y() };
+			verts2d.push_back(d2);
+			vertidxmap.push_back(i);
+		}
+		xtSeg2WithMarker ontrisegmarker;
+		ontrisegmarker.marker = 1;// one means seg on triangle surface
+		for ( size_t i=0; i<segonsurfindices.size(); ++i ) {
+			std::tuple<int,int> &segonsurf = segonsurfindices[i];
+			ontrisegmarker.seg[0] = std::get<0>(segonsurf)+3;
+			ontrisegmarker.seg[1] = std::get<1>(segonsurf)+3;
+			segmarkerlist.push_back(ontrisegmarker);
+		}
+
+		xtTrianglePLSG splittriutil(verts2d, segmarkerlist, outtris);
+
+		for ( size_t i=0; i<outtris.size(); ++i ) {
+			xtIndexTria3 tria;
+			for ( int fidx=0; fidx<3; ++fidx ) {
+				tria.a[fidx] = outtris[i].idx[fidx];
+			}
+			ss->tris.push_back(tria);
+		}
+	}
 }
 
 bool counteriftrue( bool & istrue )
@@ -270,6 +473,8 @@ void xtSplitBuilder::ConstructSplitSegments()
 			newseg->seg1 = spJlist[(falseIdxJ+2)%3];
 			mSharedSplitSegList.push_back(newseg);
 
+			mPSI->AddSplitSegmentToFace(fIidx,newseg);
+			mPSJ->AddSplitSegmentToFace(fJidx,newseg);
 			mFFM[ffkey] = newseg;
 
 		} else if ( 1==numIntersectWI&&1==numIntersectWJ ) {
@@ -284,6 +489,8 @@ void xtSplitBuilder::ConstructSplitSegments()
 			newseg->seg1 = spJlist[ijidx];
 			mSharedSplitSegList.push_back(newseg);
 
+			mPSI->AddSplitSegmentToFace(fIidx,newseg);
+			mPSJ->AddSplitSegmentToFace(fJidx,newseg);
 			mFFM[ffkey] = newseg;
 			
 		} else if ( 2==numIntersectWI && 0==numIntersectWJ ) {
@@ -298,6 +505,8 @@ void xtSplitBuilder::ConstructSplitSegments()
 			newseg->seg1 = spIlist[(falseIdx+2)%3];
 			mSharedSplitSegList.push_back(newseg);
 
+			mPSI->AddSplitSegmentToFace(fIidx,newseg);
+			mPSJ->AddSplitSegmentToFace(fJidx,newseg);
 			mFFM[ffkey] = newseg;
 			
 		} else if ( 3==numIntersectWI&&0==numIntersectWJ) {
@@ -321,6 +530,8 @@ void xtSplitBuilder::ConstructSplitSegments()
 			newseg->seg1 = spJlist[trueJidx];
 			mSharedSplitSegList.push_back(newseg);
 
+			mPSI->AddSplitSegmentToFace(fIidx,newseg);
+			mPSJ->AddSplitSegmentToFace(fJidx,newseg);
 			mFFM[ffkey] = newseg;
 
 		} else if ( 1==numIntersectWI&&2==numIntersectWJ) {
@@ -339,6 +550,8 @@ void xtSplitBuilder::ConstructSplitSegments()
 			newseg->seg1 = spJlist[(falseJidx+1)%3];
 			mSharedSplitSegList.push_back(newseg);
 
+			mPSI->AddSplitSegmentToFace(fIidx,newseg);
+			mPSJ->AddSplitSegmentToFace(fJidx,newseg);
 			mFFM[ffkey] = newseg;
 
 		} else if ( 3==numIntersectWI ) {
@@ -347,6 +560,7 @@ void xtSplitBuilder::ConstructSplitSegments()
 		}  else {
 			// unknow situation
 			printf( "I\t%d, J\t%d\n",numIntersectWI,numIntersectWJ);
+			assert(false);
 		}
 
 
@@ -360,6 +574,8 @@ void xtSplitBuilder::InitializeCollisionEntity()
 	mPSI->InitializeCollisionEntity(mCE->mSurfI,mCE->mCollide,XTSURFACEI);
 	mPSJ->InitializeCollisionEntity(mCE->mSurfJ,mCE->mCollide,XTSURFACEJ);
 }
+
+
 
 void xtSplitBuilder::DestroyMem()
 {

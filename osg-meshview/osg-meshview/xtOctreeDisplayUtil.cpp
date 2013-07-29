@@ -388,6 +388,7 @@ osg::Geode *xtOctreeDisplayUtility::RenderSplitSegmentsWithCyliner(xtSplitBuilde
 	return geode;
 }
 
+#if XT_DEBUG_PERCE_POINT
 osg::Geode *xtOctreeDisplayUtility::RenderRaySegment(xtSplitBuilder *sb)
 {
 	const float radiussp = 0.002;
@@ -415,7 +416,7 @@ osg::Geode *xtOctreeDisplayUtility::RenderRaySegment(xtSplitBuilder *sb)
 
 	return geode;
 }
-
+#endif
 
 osg::Geode *xtOctreeDisplayUtility::RednerSplitPntsAsSphere(xtSplitBuilder *splitBuilder, xtColor color, float radius/*=4.0*/)
 {

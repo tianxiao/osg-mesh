@@ -16,6 +16,9 @@
     <Filter Include="tinyaobjloader">
       <UniqueIdentifier>{0dba4097-44c4-489b-9fbd-f4f143198903}</UniqueIdentifier>
     </Filter>
+    <Filter Include="triangle">
+      <UniqueIdentifier>{59ede959-87b5-4292-ae24-5ab0f9b8f5ba}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -156,6 +159,15 @@
     <ClInclude Include="xtLog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="trianglev2\common.h">
+      <Filter>triangle</Filter>
+    </ClInclude>
+    <ClInclude Include="trianglev2\triangle.h">
+      <Filter>triangle</Filter>
+    </ClInclude>
+    <ClInclude Include="trianglev2\xtTrianglePLSG.h">
+      <Filter>triangle</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -265,6 +277,12 @@
     </ClCompile>
     <ClCompile Include="xtLog.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="trianglev2\triangle.cpp">
+      <Filter>triangle</Filter>
+    </ClCompile>
+    <ClCompile Include="trianglev2\xtTrianglePLSG.cpp">
+      <Filter>triangle</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
