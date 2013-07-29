@@ -92,6 +92,7 @@
     <ClInclude Include="tinyobjloader-master\tiny_obj_loader.h" />
     <ClInclude Include="trianglev2\common.h" />
     <ClInclude Include="trianglev2\triangle.h" />
+    <ClInclude Include="trianglev2\triangleprimitive.h" />
     <ClInclude Include="trianglev2\xtTrianglePLSG.h" />
     <ClInclude Include="txFemSurf.h" />
     <ClInclude Include="Vec2.h" />

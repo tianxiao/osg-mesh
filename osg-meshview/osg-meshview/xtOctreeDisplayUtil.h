@@ -45,4 +45,6 @@ namespace xtOctreeDisplayUtility
 	osg::Geode *RenderSplitSegmentsWithCyliner(xtSplitBuilder *splitBuilder, xtColor color, float linewidth=4.0);
 
 	osg::Cylinder *CreateCyliner(xtVector3d &start, xtVector3d &end, double radius);
+
+	osg::Geode *RenderPlanarTriSplitSegs(xtSplitBuilder *sb);
 };

@@ -418,6 +418,45 @@ osg::Geode *xtOctreeDisplayUtility::RenderRaySegment(xtSplitBuilder *sb)
 }
 #endif
 
+osg::Geode *xtOctreeDisplayUtility::RenderPlanarTriSplitSegs(xtSplitBuilder *sb)
+{
+	osg::Geode *geode = new osg::Geode;
+
+	const double radius = 0.001;
+	xtColor color (1.0,.5,0.0,1.0);
+
+#if 0
+	for ( size_t i=0; i<sb->mDebugPlannarTriSeg.size(); ++i ) {
+		xtPlanarTriSegData &data = sb->mDebugPlannarTriSeg[i];
+		for ( size_t segidx=0; segidx<data.segmarkerlist.size(); ++segidx ) {
+			xtSeg2WithMarker &seg = data.segmarkerlist[segidx];
+			xtVector3d p0, p1;
+			p0 << data.verts2d[seg.seg[0]].p[0], data.verts2d[seg.seg[0]].p[1], 0;
+			p1 << data.verts2d[seg.seg[1]].p[0], data.verts2d[seg.seg[1]].p[1], 0; 
+			geode->addDrawable( new osg::ShapeDrawable( CreateCyliner(p0,p1,radius)) );
+		}
+	}
+#endif
+	for ( size_t i=0; i<sb->mDebugPlanarTriSeg3d.size(); ++i ) {
+		xtPlanarTriSegData3d &data = sb->mDebugPlanarTriSeg3d[i];
+		for ( size_t segidx=0; segidx<data.segmarkerlist.size(); ++segidx ) {
+			xtSeg2WithMarker seg = data.segmarkerlist[segidx];
+			geode->addDrawable( new osg::ShapeDrawable( CreateCyliner(
+				data.verts[seg.seg[0]],data.verts[seg.seg[1]],radius)) );
+		}
+	}
+
+
+	// Set the color of the cylinder that extends between the two points.
+	osg::Material *pMaterial = new osg::Material;
+	osg::Vec4 CylinderColor((float)color.r,(float)color.g,(float)color.b,(float)color.alpha);
+	pMaterial->setDiffuse( osg::Material::FRONT, CylinderColor);
+	geode->getOrCreateStateSet()->setAttribute( pMaterial, osg::StateAttribute::OVERRIDE );
+
+
+	return geode;
+}
+
 osg::Geode *xtOctreeDisplayUtility::RednerSplitPntsAsSphere(xtSplitBuilder *splitBuilder, xtColor color, float radius/*=4.0*/)
 {
 	osg::Geode *geode = new osg::Geode;

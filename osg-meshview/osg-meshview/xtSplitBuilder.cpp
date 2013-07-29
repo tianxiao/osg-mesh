@@ -10,6 +10,12 @@
 void xtCollisionEntity::DestroyMem()
 {
 	for ( size_t i=0; i<surfslot.size(); ++i ) {
+		// TODO!!!
+		for ( size_t svidx=0; surfslot[i]->pointsOnSurfVerbos.size(); ++svidx ) {
+			delete surfslot[i]->pointsOnSurfVerbos[svidx];
+			surfslot[i]->pointsOnSurfVerbos[svidx] = NULL;
+		}
+		
 		delete surfslot[i];
 		surfslot[i] = NULL;
 	}
@@ -68,6 +74,14 @@ void xtCollisionEntity::AddSplitSegmentToFace(const int fi, xtSegment *seg)
 	assert(ss);
 	ss->segsonsurf.push_back(seg);
 }
+
+void xtCollisionEntity::AddSplitSegmentRBToFace(const int fi, xtSegmentRobust *segrb)
+{
+	xtSurfaceSlot *ss = GetFaceSlotExit(fi);
+	assert(ss);
+	ss->segrobust.push_back(segrb);
+}
+
 
 xtSurfaceSlot *xtCollisionEntity::GetFaceSlotExit(int fi)
 {
@@ -128,9 +142,17 @@ void xtSplitBuilder::Split()
 {
 	SplitPnt(mPSI,mPSJ,mSFMI,mCE->mSurfI,mCE->mSurfJ);
 	SplitPnt(mPSJ,mPSI,mSFMJ,mCE->mSurfJ,mCE->mSurfI);
-	ConstructSplitSegments();
-	TessellateCollidedFace(mPSI,mCE->mSurfI);
-	TessellateCollidedFace(mPSJ,mCE->mSurfJ);
+	bool isrobust=true;
+	if ( isrobust ) {
+		ConstructSplitSegmentsRobust();
+		TessellateCollidedFaceRobust(mPSI,mCE,0);
+		//TessellateCollidedFaceRobust(mPSJ,mCE,1);
+	} else {
+		ConstructSplitSegments();	
+		TessellateCollidedFace(mPSI,mCE->mSurfI);
+		TessellateCollidedFace(mPSJ,mCE->mSurfJ);
+	}
+	
 }
 
 void xtSplitBuilder::SplitPnt(xtCollisionEntity *psI, xtCollisionEntity *psJ, xtSFMap &sfmap, xtGeometrySurfaceDataS *surfI, xtGeometrySurfaceDataS *surfJ)
@@ -296,6 +318,49 @@ void xtSegmentPointer2Index::IndexPointer(std::vector<xtSegment *> &segs,
 }
 
 
+void xtSegmentRobustPointer2Index::IndexPointer(std::vector<xtSegmentRobust *> &segps, 
+	std::vector<xtVertexRobust *> &verts,
+	std::vector<std::tuple<int,int>> &segis)
+{
+	xtPntRobustSlotMap rsmap;
+	int vertcount = 0;
+	for ( size_t i=0; i<segps.size(); ++i ) {
+		std::tuple<int,int> intseg;
+		xtSegmentRobust *seg = segps[i];
+
+		xtPntRobustSlotMap::iterator fsit = rsmap.find( &(seg->v[0]) );
+		if ( fsit!=rsmap.end() ) {
+			std::get<0>( intseg ) = fsit->second;
+		} else {
+			std::get<0>( intseg ) = vertcount;
+			rsmap.insert( std::pair< xtVertexRobust*, int>(&(seg->v[0]), vertcount++) );
+		}
+
+		xtPntRobustSlotMap::iterator feit = rsmap.find( &(seg->v[1]) );
+		if ( feit!=rsmap.end() ) {
+			std::get<1>( intseg ) = feit->second;
+		} else {
+			std::get<1>( intseg ) = vertcount;
+			rsmap.insert( std::pair< xtVertexRobust*, int>( &(seg->v[1]), vertcount++) );
+		}
+
+		segis.push_back( intseg );
+	}
+
+	std::vector<int> idxcache;
+	for ( xtPntRobustSlotMap::iterator it=rsmap.begin(); it!=rsmap.end(); ++it ) {
+		idxcache.push_back(it->second);
+		verts.push_back(it->first);
+	}
+
+	std::sort( idxcache.begin(), idxcache.end() );
+
+	for ( size_t i=0; i<idxcache.size()/2; ++i ) {
+		std::swap( verts[i], verts[idxcache[i]] );
+	}
+}
+
+
 void xtSplitBuilder::TessellateCollidedFace(xtCollisionEntity *ps, xtGeometrySurfaceDataS *surf)
 {
 	for ( size_t ssidx=0; ssidx<ps->surfslot.size(); ++ssidx ) {
@@ -383,6 +448,243 @@ void xtSplitBuilder::TessellateCollidedFace(xtCollisionEntity *ps, xtGeometrySur
 			segmarkerlist.push_back(ontrisegmarker);
 		}
 
+
+
+		xtTrianglePLSG splittriutil(verts2d, segmarkerlist, outtris);
+
+		for ( size_t i=0; i<outtris.size(); ++i ) {
+			xtIndexTria3 tria;
+			for ( int fidx=0; fidx<3; ++fidx ) {
+				tria.a[fidx] = outtris[i].idx[fidx];
+			}
+			ss->tris.push_back(tria);
+		}
+	}
+}
+
+void xtSplitBuilder::TessellateCollidedFaceRobust( xtCollisionEntity *ps, xtCollisionEngine *ce, const int type )
+{
+	xtGeometrySurfaceDataS *surf;
+	if ( type==0 ) {
+		surf = ce->mSurfI;
+	} else if ( type==1 ) {
+		surf = ce->mSurfJ;
+	}
+
+	for ( size_t ssidx=0; ssidx<ps->surfslot.size(); ++ssidx ) {
+		xtSurfaceSlot *ss = ps->surfslot[ssidx];
+		
+		std::vector<int> vertidxmap;
+
+		xtIndexTria3 &triaI = surf->indices[ss->idx];
+		xtVector3d pa = GetWorldCoordinate(surf,triaI.a[0]);//surfI->verts[triaI.a[0]];
+		xtVector3d pb = GetWorldCoordinate(surf,triaI.a[1]);//surfI->verts[triaI.a[1]];
+		xtVector3d pc = GetWorldCoordinate(surf,triaI.a[2]);//surfI->verts[triaI.a[2]];
+		vertidxmap.push_back(triaI.a[0]);
+		vertidxmap.push_back(triaI.a[1]);
+		vertidxmap.push_back(triaI.a[2]);
+
+		// construct local coordinate
+		xtVector3d pba = pb - pa;
+		xtVector3d pca = pc - pa;
+		xtVector3d norm = pca.cross(pba);
+		norm.normalize();
+		xtVector3d xcoord = pca.cross(norm);
+		xcoord.normalize();
+		xtVector3d ycoord = norm.cross(xcoord);
+
+		//xtMatrix3d rotm(
+		//	xcoord.x(),ycoord.x(),norm.x(),
+		//	xcoord.y(),ycoord.y(),norm.y(),
+		//	xcoord.z(),ycoord.z(),norm.z());
+		xtMatrix3d rotminv;
+		rotminv << xcoord.x(),ycoord.x(),norm.x(),
+			xcoord.y(),ycoord.y(),norm.y(),
+			xcoord.z(),ycoord.z(),norm.z() ;
+		xtMatrix3d rotm;
+		rotm << 
+			xcoord.x(), xcoord.y(), xcoord.z(),
+			ycoord.x(), ycoord.y(), ycoord.z(),
+			norm.x(), norm.y(), norm.z();
+
+
+		std::vector<xtVertexRobust *> segonsurfverts;
+		std::vector<std::tuple<int,int>> segonsurfindices;
+		xtSegmentRobustPointer2Index indexsegonsurf;
+		indexsegonsurf.IndexPointer(ss->segrobust,segonsurfverts,segonsurfindices);
+		
+		std::vector<xtTriPnt2> verts2d;
+		std::vector<xtSeg2WithMarker> segmarkerlist;
+		std::vector<xtTriIndexO> outtris;
+
+		// pack triangle boundary
+		xtVector3d pa2d = rotm*pa;
+		xtVector3d pb2d = rotm*pb;
+		xtVector3d pc2d = rotm*pc;
+		xtTriPnt2 a2d = { pa2d.x(), pa2d.y() };
+		xtTriPnt2 b2d = { pb2d.x(), pb2d.y() };
+		xtTriPnt2 c2d = { pc2d.x(), pc2d.y() };
+		const double zheight = (pa2d.z()+pb2d.z()+pc2d.z())/3.;
+		verts2d.push_back(a2d);
+		verts2d.push_back(b2d);
+		verts2d.push_back(c2d);
+		xtSeg2WithMarker segmarker;
+		segmarker.seg[0] = 0;
+		segmarker.seg[1] = 1;
+		segmarker.marker = 0;
+		segmarkerlist.push_back(segmarker);
+		segmarker.seg[0] = 1;
+		segmarker.seg[1] = 2;
+		segmarker.marker = 0;
+		segmarkerlist.push_back(segmarker);
+		segmarker.seg[0] = 2;
+		segmarker.seg[1] = 0;
+		segmarker.marker = 0;
+		segmarkerlist.push_back(segmarker);
+
+		// pack seg on triangle surf
+		std::vector<int> newsplitidx;
+		std::vector<int> idxlist;
+		for ( size_t i=0; i<segonsurfverts.size(); ++i ) {
+			xtVertexRobust *vert = segonsurfverts[i];
+			if ( vert->vtype == NEW_SPLIT ) {
+				newsplitidx.push_back(i);
+				xtVector3d p2d = rotm*(*(vert->v));
+				xtTriPnt2 d2 = {p2d.x(),p2d.y()};
+				verts2d.push_back(d2);
+			} else if ( type==0 ) {
+				if ( vert->vtype == ORI_VERTEXI ) {
+					if ( vert->idx==triaI.a[0] ) {
+						idxlist.push_back(0);
+					} else if ( vert->idx==triaI.a[1] ) {
+						idxlist.push_back(1);
+					} else if ( vert->idx==triaI.a[2] ) {
+						idxlist.push_back(2);
+					}
+				} else if ( vert->vtype == ORI_VERTEXJ ) {
+					xtVector3d p2d = rotm*GetWorldCoordinate(ce->mSurfJ, vert->idx);
+					xtTriPnt2 d2 = {p2d.x(),p2d.y()};
+					verts2d.push_back(d2);
+					newsplitidx.push_back(i);
+				}
+			} else if ( type == 1 ) {
+				if ( vert->vtype == ORI_VERTEXI ) {
+					xtVector3d p2d = rotm*GetWorldCoordinate(ce->mSurfI, vert->idx);
+					xtTriPnt2 d2 = {p2d.x(),p2d.y()};
+					verts2d.push_back(d2);
+					newsplitidx.push_back(i);
+				} else if ( vert->vtype == ORI_VERTEXJ ) {
+					if ( vert->idx==triaI.a[0] ) {
+						idxlist.push_back(0);
+					} else if ( vert->idx==triaI.a[1] ) {
+						idxlist.push_back(1);
+					} else if ( vert->idx==triaI.a[2] ) {
+						idxlist.push_back(2);
+					}
+				}
+			} 
+
+
+
+		}
+
+		xtSeg2WithMarker ontrisegmarker;
+		ontrisegmarker.marker = 1;// one means seg on triangle surface
+		int indxcounter=0;
+		for ( size_t i=0; i<segonsurfindices.size(); ++i ) {
+			std::tuple<int,int> &segonsurf = segonsurfindices[i];
+			xtVertexRobust *vert0 = segonsurfverts[std::get<0>(segonsurf)];
+			xtVertexRobust *vert1 = segonsurfverts[std::get<1>(segonsurf)];
+			if ( type==0 ) {
+				if ( vert0->vtype==NEW_SPLIT ) {
+					std::vector<int>::iterator fit = std::find(newsplitidx.begin(),newsplitidx.end(),std::get<0>(segonsurf));
+					const int newidx = std::distance(newsplitidx.begin(),fit);
+					std::get<0>(segonsurf) = newidx;
+					std::get<0>( segonsurf ) = newidx + 3;
+				}
+				if ( vert1->vtype==NEW_SPLIT ) {
+					std::vector<int>::iterator fit = std::find( newsplitidx.begin(), newsplitidx.end(), std::get<1>(segonsurf) );
+					const int newidx = std::distance( newsplitidx.begin(),fit );
+					std::get<1>( segonsurf ) = newidx;
+					std::get<1>( segonsurf ) = newidx + 3;
+				}
+				if ( vert0->vtype==ORI_VERTEXI ) {
+					std::get<0>( segonsurf ) = idxlist[indxcounter++];
+				}
+				if ( vert1->vtype==ORI_VERTEXI ) {
+					std::get<1>( segonsurf ) = idxlist[indxcounter++];
+				}
+				if ( vert0->vtype==ORI_VERTEXJ ) {
+					std::vector<int>::iterator fit = std::find( newsplitidx.begin(), newsplitidx.end(), std::get<0>(segonsurf) );
+					const int newidx = std::distance( newsplitidx.begin(),fit );
+					std::get<0>( segonsurf )  = newidx;
+					std::get<0>( segonsurf )  = newidx + 3 ;
+				}
+				if ( vert1->vtype==ORI_VERTEXJ ) {
+					std::vector<int>::iterator fit = std::find( newsplitidx.begin(), newsplitidx.end(), std::get<1>(segonsurf) );
+					const int newidx = std::distance( newsplitidx.begin(),fit );
+					std::get<1>( segonsurf ) = newidx;
+					std::get<1>( segonsurf ) = newidx + 3;
+				}
+			} else if ( type==1 ) {
+				if ( vert0->vtype==NEW_SPLIT ) {
+					std::vector<int>::iterator fit = std::find(newsplitidx.begin(),newsplitidx.end(),std::get<0>(segonsurf));
+					const int newidx = std::distance( newsplitidx.begin(),fit );
+					std::get<0>(segonsurf) = newidx;
+					std::get<0>(segonsurf) = newidx + 3;
+				}
+				if ( vert1->vtype==NEW_SPLIT ) {
+					std::vector<int>::iterator fit = std::find( newsplitidx.begin(), newsplitidx.end(), std::get<1>(segonsurf) );
+					const int newidx = std::distance( newsplitidx.begin(), fit );
+					std::get<1>( segonsurf ) = newidx;
+					std::get<1>( segonsurf ) = newidx + 3;
+				}
+				if ( vert0->vtype==ORI_VERTEXI ) {
+					std::vector<int>::iterator fit = std::find( newsplitidx.begin(), newsplitidx.end(), std::get<0>(segonsurf) );
+					const int newidx = std::distance( newsplitidx.begin(),fit );
+					std::get<0>( segonsurf )  = newidx;
+					std::get<0>( segonsurf )  = newidx + 3;
+				}
+				if ( vert1->vtype==ORI_VERTEXI ) {
+					std::vector<int>::iterator fit = std::find( newsplitidx.begin(), newsplitidx.end(), std::get<1>(segonsurf) );
+					const int newidx = std::distance( newsplitidx.begin(),fit );
+					std::get<1>( segonsurf ) = newidx;
+					std::get<1>( segonsurf ) = newidx + 3;
+				}
+				if ( vert0->vtype==ORI_VERTEXJ ) {
+					std::get<0>( segonsurf ) = idxlist[indxcounter++];
+				}
+				if ( vert1->vtype==ORI_VERTEXJ ) {
+					std::get<1>( segonsurf ) = idxlist[indxcounter++];
+				}
+			}
+			ontrisegmarker.marker = 1;
+			ontrisegmarker.seg[0] = std::get<0>( segonsurf );
+			ontrisegmarker.seg[1] = std::get<1>( segonsurf );
+			segmarkerlist.push_back(ontrisegmarker);
+		}
+
+#if XT_DEBUG_PLANAR_TRI_SET
+		xtPlanarTriSegData ptriseg;
+		ptriseg.verts2d = verts2d;
+		ptriseg.segmarkerlist = segmarkerlist;
+		mDebugPlannarTriSeg.push_back(ptriseg);
+
+		xtPlanarTriSegData3d ptriseg3d;
+		for ( size_t i=0; i<verts2d.size(); ++i ) {
+			xtVector3d v;
+			v << verts2d[i].p[0] , verts2d[i].p[1], zheight;
+			ptriseg3d.verts.push_back( rotminv*v );
+		}
+		ptriseg3d.segmarkerlist = segmarkerlist;
+		mDebugPlanarTriSeg3d.push_back(ptriseg3d);
+		
+		if ( ssidx==0 ) {
+			return;
+		}
+#endif
+
+
 		xtTrianglePLSG splittriutil(verts2d, segmarkerlist, outtris);
 
 		for ( size_t i=0; i<outtris.size(); ++i ) {
@@ -398,6 +700,223 @@ void xtSplitBuilder::TessellateCollidedFace(xtCollisionEntity *ps, xtGeometrySur
 bool counteriftrue( bool & istrue )
 {
 	return istrue;
+}
+
+void xtSplitBuilder::ConstructSplitSegmentsRobust()
+{
+	for ( size_t ki=0; ki<mCE->mCollide.size(); ++ki ) {
+		const int fIidx = mCE->mCollide[ki].i;
+		const int fJidx = mCE->mCollide[ki].j;
+		xtFaceFaceKey ffkey = {fIidx,fJidx};
+		xtFaceFaceKey ffkeyinv = {fJidx, fIidx};
+		xtFFMap::iterator findkey = mFFM.find(ffkey);
+		// bug
+		//xtFFMap::iterator findkeyinv = mFFM.find(ffkeyinv);
+		if ( findkey!=mFFM.end() /*|| findkeyinv!=mFFM.end() */) continue;
+		
+		// let J's tri 3 edge test the I's face
+		// 0) may degenerate
+		// 1) one case in J 
+		// 2) generate the common split segment
+		std::vector<bool> edgestateI; edgestateI.reserve(3);
+		std::vector<xtVector3d *> spIlist; spIlist.reserve(3);
+		std::vector<bool> edgestateJ; edgestateJ.reserve(3);
+		std::vector<xtVector3d *> spJlist; spJlist.reserve(3);
+
+		xtIndexTria3 triaI = mCE->mSurfI->indices[fIidx];
+		xtIndexTria3 triaJ = mCE->mSurfJ->indices[fJidx];
+
+		// check start end collidessIdx as a key;
+		for ( int i=0; i<3; ++i ) {
+			xtSegmentFaceK key = { triaJ.a[i], triaJ.a[(i+1)%3], fIidx };
+			xtSegmentFaceK keyinv = { triaJ.a[(i+1)%3], triaJ.a[i], fIidx };
+			xtSFMap::iterator findit;
+			if ( (findit=mSFMI.find(key))!=mSFMI.end() ) {
+				edgestateI.push_back(true);
+				spIlist.push_back(findit->second);
+			} else if ( (findit=mSFMI.find(keyinv))!=mSFMI.end() ) {
+				edgestateI.push_back(true);
+				spIlist.push_back(findit->second);
+			} else {
+				edgestateI.push_back(false);
+				spIlist.push_back(NULL);
+			}
+		}
+
+		for ( int i=0; i<3; ++i ) {
+			xtSegmentFaceK key = { triaI.a[i], triaI.a[(i+1)%3], fJidx };
+			xtSegmentFaceK keyinv = { triaI.a[(i+1)%3], triaI.a[i], fJidx };
+			xtSFMap::iterator findit;
+			if ( (findit=mSFMJ.find(key))!=mSFMJ.end() ) {
+				edgestateJ.push_back(true);
+				spJlist.push_back(findit->second);
+			} else if ( (findit=mSFMJ.find(keyinv))!=mSFMJ.end() ) {
+				edgestateJ.push_back(true);
+				spJlist.push_back(findit->second);
+			} else {
+				edgestateJ.push_back(false);
+				spJlist.push_back(NULL);
+			}
+		}
+
+		//int numIntersectWI, numIntersectWJ;
+		const int numIntersectWI = std::count(edgestateI.begin(),edgestateI.end(),true);
+		const int numIntersectWJ = std::count(edgestateJ.begin(),edgestateJ.end(),true);
+		if ( 0==numIntersectWI && 2==numIntersectWJ ) {
+			//std::vector<bool>::iterator findfalse = std::find(edgestateI.begin(),edgestateI.end(),false);
+			int falseIdxJ;
+			for ( size_t i=0; i<edgestateJ.size(); ++i ) {
+				if ( !edgestateJ[i] ) {
+					falseIdxJ = i;
+				}
+			}
+			xtSegment *newseg = new xtSegment;
+			newseg->seg0 = spJlist[(falseIdxJ+1)%3];
+			newseg->seg1 = spJlist[(falseIdxJ+2)%3];
+			mSharedSplitSegList.push_back(newseg);
+
+			mPSI->AddSplitSegmentToFace(fIidx,newseg);
+			mPSJ->AddSplitSegmentToFace(fJidx,newseg);
+			mFFM[ffkey] = newseg;
+
+			//======================================================
+			xtSegmentRobust *newsegrb = new xtSegmentRobust;
+			newsegrb->v[0].vtype = NEW_SPLIT;
+			newsegrb->v[0].v = spJlist[(falseIdxJ+1)%3];
+			newsegrb->v[1].vtype = NEW_SPLIT;
+			newsegrb->v[1].v = spJlist[(falseIdxJ+2)%3];
+
+			mPSI->AddSplitSegmentRBToFace(fIidx,newsegrb);
+			mPSJ->AddSplitSegmentRBToFace(fJidx,newsegrb);
+
+		} else if ( 1==numIntersectWI&&1==numIntersectWJ ) {
+			std::vector<bool>::iterator iiiter = std::find(edgestateI.begin(), edgestateI.end(), true);
+			const size_t iiidx = std::distance(edgestateI.begin(),iiiter);
+
+			std::vector<bool>::iterator ijiter = std::find(edgestateJ.begin(), edgestateJ.end(), true);
+			const size_t ijidx = std::distance(edgestateJ.begin(),ijiter);
+
+			xtSegment *newseg = new xtSegment;
+			newseg->seg0 = spIlist[iiidx];
+			newseg->seg1 = spJlist[ijidx];
+			mSharedSplitSegList.push_back(newseg);
+
+			mPSI->AddSplitSegmentToFace(fIidx,newseg);
+			mPSJ->AddSplitSegmentToFace(fJidx,newseg);
+			mFFM[ffkey] = newseg;
+
+			//======================================================
+			xtSegmentRobust *newsegrb = new xtSegmentRobust;
+			newsegrb->v[0].vtype = NEW_SPLIT;
+			newsegrb->v[0].v = spIlist[iiidx];
+			newsegrb->v[1].vtype = NEW_SPLIT;
+			newsegrb->v[1].v = spJlist[ijidx];
+
+			mPSI->AddSplitSegmentRBToFace(fIidx,newsegrb);
+			mPSJ->AddSplitSegmentRBToFace(fJidx,newsegrb);
+			
+		} else if ( 2==numIntersectWI && 0==numIntersectWJ ) {
+			int falseIdx;
+			for ( size_t i=0; i<edgestateI.size(); ++i ) {
+				if ( !edgestateI[i] ) {
+					falseIdx = i;
+				}
+			}
+			xtSegment *newseg = new xtSegment;
+			newseg->seg0 = spIlist[(falseIdx+1)%3];
+			newseg->seg1 = spIlist[(falseIdx+2)%3];
+			mSharedSplitSegList.push_back(newseg);
+
+			mPSI->AddSplitSegmentToFace(fIidx,newseg);
+			mPSJ->AddSplitSegmentToFace(fJidx,newseg);
+			mFFM[ffkey] = newseg;
+
+			//======================================================
+			xtSegmentRobust *newsegrb = new xtSegmentRobust;
+			newsegrb->v[0].vtype = NEW_SPLIT;
+			newsegrb->v[0].v = spIlist[(falseIdx+1)%3];
+			newsegrb->v[1].vtype = NEW_SPLIT;
+			newsegrb->v[1].v = spIlist[(falseIdx+2)%3];
+
+			mPSI->AddSplitSegmentRBToFace(fIidx,newsegrb);
+			mPSJ->AddSplitSegmentRBToFace(fJidx,newsegrb);
+			
+		} else if ( 3==numIntersectWI&&0==numIntersectWJ) {
+			printf( "Co point I\n" );
+
+		} else if ( 0==numIntersectWI&&3==numIntersectWJ) {
+			printf( "Co point J\n" );
+
+		} else if ( 2==numIntersectWI&&1==numIntersectWJ) {
+			//printf( "I touch on\n" ); 
+			// one point of I on triangle J
+			// There at least two edge intersect with J degenerate case
+			std::vector<bool>::iterator findIit = std::find(edgestateI.begin(),edgestateI.end(),false);
+			const size_t falseIidx = std::distance(edgestateI.begin(),findIit);
+			
+			std::vector<bool>::iterator findJit = std::find(edgestateJ.begin(),edgestateJ.end(),true);
+			const size_t trueJidx = std::distance(edgestateJ.begin(),findJit);
+
+			xtSegment *newseg = new xtSegment;
+			newseg->seg0 = spIlist[(falseIidx+1)%3];
+			newseg->seg1 = spJlist[trueJidx];
+			mSharedSplitSegList.push_back(newseg);
+
+			mPSI->AddSplitSegmentToFace(fIidx,newseg);
+			mPSJ->AddSplitSegmentToFace(fJidx,newseg);
+			mFFM[ffkey] = newseg;
+
+			//======================================================
+			xtSegmentRobust *newsegrb = new xtSegmentRobust;
+			newsegrb->v[0].vtype = ORI_VERTEXI;
+			newsegrb->v[0].idx = triaI.a[(falseIidx+2)%3];
+			newsegrb->v[1].vtype = NEW_SPLIT;
+			newsegrb->v[1].v = spJlist[trueJidx];
+
+			mPSI->AddSplitSegmentRBToFace(fIidx,newsegrb);
+			mPSJ->AddSplitSegmentRBToFace(fJidx,newsegrb);
+
+		} else if ( 1==numIntersectWI&&2==numIntersectWJ) {
+			//printf( "J touch on\n" );
+			// one point of J on triangle area I
+			// There at lease two edge intersect by this degenerate case
+			// In this branch just one edge collision
+			std::vector<bool>::iterator findIit = std::find(edgestateI.begin(),edgestateI.end(),true);
+			const size_t trueIidx = std::distance(edgestateI.begin(),findIit);
+			
+			std::vector<bool>::iterator findJit = std::find(edgestateJ.begin(),edgestateJ.end(),false);
+			const size_t falseJidx = std::distance(edgestateJ.begin(),findJit);
+
+			xtSegment *newseg = new xtSegment;
+			newseg->seg0 = spIlist[trueIidx];
+			newseg->seg1 = spJlist[(falseJidx+1)%3];
+			mSharedSplitSegList.push_back(newseg);
+
+			mPSI->AddSplitSegmentToFace(fIidx,newseg);
+			mPSJ->AddSplitSegmentToFace(fJidx,newseg);
+			mFFM[ffkey] = newseg;
+
+			//======================================================
+			xtSegmentRobust *newsegrb = new xtSegmentRobust;
+			newsegrb->v[0].vtype = NEW_SPLIT;
+			newsegrb->v[0].v = spIlist[trueIidx];
+			newsegrb->v[1].vtype = ORI_VERTEXJ;
+			newsegrb->v[1].idx = triaJ.a[(falseJidx+2)%3];
+
+			mPSI->AddSplitSegmentRBToFace(fIidx,newsegrb);
+			mPSJ->AddSplitSegmentRBToFace(fJidx,newsegrb);
+
+		} else if ( 3==numIntersectWI ) {
+			// impossible if they are not lay int the same plane
+			assert(false);
+		}  else {
+			// unknow situation
+			printf( "I\t%d, J\t%d\n",numIntersectWI,numIntersectWJ);
+			assert(false);
+		}
+
+
+	}
 }
 
 void xtSplitBuilder::ConstructSplitSegments()
@@ -574,8 +1093,6 @@ void xtSplitBuilder::InitializeCollisionEntity()
 	mPSI->InitializeCollisionEntity(mCE->mSurfI,mCE->mCollide,XTSURFACEI);
 	mPSJ->InitializeCollisionEntity(mCE->mSurfJ,mCE->mCollide,XTSURFACEJ);
 }
-
-
 
 void xtSplitBuilder::DestroyMem()
 {

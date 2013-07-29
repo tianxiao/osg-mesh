@@ -168,6 +168,9 @@
     <ClInclude Include="trianglev2\xtTrianglePLSG.h">
       <Filter>triangle</Filter>
     </ClInclude>
+    <ClInclude Include="trianglev2\triangleprimitive.h">
+      <Filter>triangle</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

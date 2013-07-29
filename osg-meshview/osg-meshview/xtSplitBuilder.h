@@ -4,8 +4,10 @@
 #include <map>
 #include <tuple>
 #include "xtPrimitive.h"
+#include "./trianglev2/triangleprimitive.h"
 
 #define XT_DEBUG_PERCE_POINT 0;
+#define XT_DEBUG_PLANAR_TRI_SET 1;
 
 struct xtSegmentKey
 {
@@ -67,6 +69,25 @@ struct xtSegment
 	xtVector3d *seg1;
 };
 
+enum xtVertexRobustType
+{
+	NEW_SPLIT,
+	ORI_VERTEXI,
+	ORI_VERTEXJ,
+};
+
+struct xtVertexRobust
+{
+	xtVertexRobustType vtype;
+	xtVector3d *v; // new split point on surf
+	int idx;       // triangle's vertex idx
+};
+
+struct xtSegmentRobust
+{
+	xtVertexRobust v[2]; 
+};
+
 struct xtSurfaceSlot
 {
 	int idx;
@@ -77,6 +98,10 @@ struct xtSurfaceSlot
 	std::vector<xtVector3d *> pointsOnSurf;
 	std::vector<xtVector3d *> pointsOnSurfVerbos;  // same as pointsOnSurf in case miss
 	std::vector<xtSegment *> segsonsurf;
+	//====================================
+	// Handle the point is to close or site on the triangle's original vertex
+	std::vector<xtSegmentRobust *> segrobust;
+
 	std::vector<xtIndexTria3 > tris;  
 	// pre 3 is the tirangle idx should be reference to the surface data
 	// for 3- is the local segment data should reference the the pointsOnSurfVerbos
@@ -125,6 +150,46 @@ public:
 private:
 
 };
+// order
+// new_split, vertexJ, vertexJ
+struct xtPntRobustSlotKeyComp
+{
+	bool operator()( const  xtVertexRobust *left, const xtVertexRobust *right )
+	{
+		if ( left->vtype==right->vtype && right->vtype==NEW_SPLIT ) {
+			return (left->v-right->v)>0;
+		}
+		if ( (left->vtype==ORI_VERTEXI||left->vtype==ORI_VERTEXJ) &&right->vtype==NEW_SPLIT ) {
+			return true;
+		}
+		if ( left->vtype==NEW_SPLIT && (right->vtype==ORI_VERTEXI||right->vtype==ORI_VERTEXJ) ){
+			return false;
+		}
+		if ( left->vtype!=NEW_SPLIT&&right->vtype!=NEW_SPLIT 
+			&&left->vtype!=right->vtype ) {
+			return left->vtype==ORI_VERTEXI;
+		}
+		if ( left->vtype==ORI_VERTEXI ) {
+			return left->idx<right->idx;
+		}
+		if ( left->vtype==ORI_VERTEXJ ) {
+			return left->idx<right->idx;
+		}
+		
+	}
+};
+
+typedef std::map<xtVertexRobust *, int, xtPntRobustSlotKeyComp> xtPntRobustSlotMap;
+
+class xtSegmentRobustPointer2Index
+{
+public:
+	void IndexPointer(std::vector<xtSegmentRobust *> &segps, 
+		std::vector<xtVertexRobust *> &verts,
+		std::vector<std::tuple<int,int>> &segis);
+private:
+
+};
 
 enum xtSurfaceCat
 {
@@ -147,6 +212,7 @@ public:
 
 	void InitializeCollisionEntity(xtGeometrySurfaceDataS *surf, std::vector<xtCollidePair> &pairs, xtSurfaceCat surfcat);
 	void AddSplitSegmentToFace(const int fi, xtSegment *seg);
+	void AddSplitSegmentRBToFace(const int fi, xtSegmentRobust *segrb);
 
 
 private:
@@ -170,6 +236,7 @@ namespace xtOctreeDisplayUtility
 	osg::Geode *RenderSplitSegmentsWithCyliner(xtSplitBuilder *splitBuilder, xtColor color, float linewidth/*=4.0*/);
 	osg::Geode *RednerSplitPntsAsSphere(xtSplitBuilder *splitBuilder, xtColor color, float linewidth/*=4.0*/);
 	osg::Geode *RenderRaySegment(xtSplitBuilder *sb);
+	osg::Geode *RenderPlanarTriSplitSegs(xtSplitBuilder *sb);
 };
 
 //typedef std::tuple<xtVector3d, xtVector3d> xtRaySegment;
@@ -181,6 +248,18 @@ struct xtRaySegment
 	xtVector3d oriend;
 };
 
+struct xtPlanarTriSegData
+{
+	std::vector<xtTriPnt2> verts2d;
+	std::vector<xtSeg2WithMarker> segmarkerlist;
+};
+
+struct xtPlanarTriSegData3d
+{
+	std::vector<xtVector3d> verts;
+	std::vector<xtSeg2WithMarker> segmarkerlist;
+};
+
 class xtCollisionEngine;
 class xtSplitBuilder
 {
@@ -190,6 +269,7 @@ class xtSplitBuilder
 	friend osg::Geode * xtOctreeDisplayUtility::RenderSplitSegmentsWithCyliner(xtSplitBuilder *splitBuilder, xtColor color, float linewidth/*=4.0*/);
 	friend osg::Geode * xtOctreeDisplayUtility::RednerSplitPntsAsSphere(xtSplitBuilder *splitBuilder, xtColor color, float linewidth/*=4.0*/);
 	friend osg::Geode * xtOctreeDisplayUtility::RenderRaySegment(xtSplitBuilder *sb);
+	friend osg::Geode * xtOctreeDisplayUtility::RenderPlanarTriSplitSegs(xtSplitBuilder *sb);
 	typedef std::map<xtSegmentFaceK, xtVector3d *, xtSegFaceComp> xtSFMap;
 	typedef std::map<xtFaceFaceKey, xtSegment *, xtFaceFaceKeyComp> xtFFMap;
 public:
@@ -202,8 +282,10 @@ public:
 
 private:
 	void ConstructSplitSegments();
+	void ConstructSplitSegmentsRobust();
 	void SplitPnt(xtCollisionEntity *psI, xtCollisionEntity *psJ, xtSFMap &sfmap, xtGeometrySurfaceDataS *surfI, xtGeometrySurfaceDataS *surfJ);
-	void TessellateCollidedFace(xtCollisionEntity *ps, xtGeometrySurfaceDataS *surf);
+	void TessellateCollidedFace(xtCollisionEntity *ps, xtGeometrySurfaceDataS *surf );
+	void TessellateCollidedFaceRobust( xtCollisionEntity *ps, xtCollisionEngine *ce, const int type);
 	void InitializeCollisionEntity();
 	void DestroyMem();
 
@@ -225,6 +307,10 @@ private:
 	xtCollisionEntity *mPSI; // PS mean partial collision surface
 	xtCollisionEntity *mPSJ;
 
+	//======================================================================================
+	// debug the segment and triangle after the normal projection
+	std::vector<xtPlanarTriSegData> mDebugPlannarTriSeg;
+	std::vector<xtPlanarTriSegData3d> mDebugPlanarTriSeg3d;
 	//======================================================================================
 	// only for debug
 #if XT_DEBUG_PERCE_POINT
