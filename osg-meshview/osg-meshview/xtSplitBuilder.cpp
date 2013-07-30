@@ -4,6 +4,8 @@
 #include "xtGeometrySurfaceData.h"
 #include "xtRayTriOverlay.h"
 #include <algorithm>
+#include <list>
+#include <queue>
 #include "xtLog.h"
 #include "./trianglev2/xtTrianglePLSG.h"
 
@@ -353,7 +355,7 @@ void xtSegmentRobustPointer2Index::IndexPointer(std::vector<xtSegmentRobust *> &
 		verts.push_back(it->first);
 	}
 
-	std::sort( idxcache.begin(), idxcache.end() );
+	//std::sort( idxcache.begin(), idxcache.end() );
 
 	for ( size_t i=0; i<idxcache.size()/2; ++i ) {
 		std::swap( verts[i], verts[idxcache[i]] );
@@ -511,7 +513,7 @@ void xtSplitBuilder::TessellateCollidedFaceRobust( xtCollisionEntity *ps, xtColl
 		std::vector<xtVertexRobust *> segonsurfverts;
 		std::vector<std::tuple<int,int>> segonsurfindices;
 		xtSegmentRobustPointer2Index indexsegonsurf;
-		indexsegonsurf.IndexPointer(ss->segrobust,segonsurfverts,segonsurfindices);
+	 	indexsegonsurf.IndexPointer(ss->segrobust,segonsurfverts,segonsurfindices);
 		
 		std::vector<xtTriPnt2> verts2d;
 		std::vector<xtSeg2WithMarker> segmarkerlist;
@@ -583,10 +585,11 @@ void xtSplitBuilder::TessellateCollidedFaceRobust( xtCollisionEntity *ps, xtColl
 					}
 				}
 			} 
-
-
-
 		}
+
+
+		ConcatenationPolyLine(segonsurfindices,segonsurfverts.size());
+
 
 		xtSeg2WithMarker ontrisegmarker;
 		ontrisegmarker.marker = 1;// one means seg on triangle surface
@@ -679,7 +682,7 @@ void xtSplitBuilder::TessellateCollidedFaceRobust( xtCollisionEntity *ps, xtColl
 		ptriseg3d.segmarkerlist = segmarkerlist;
 		mDebugPlanarTriSeg3d.push_back(ptriseg3d);
 		
-		if ( ssidx==0 ) {
+		if ( ssidx==3 ) {
 			return;
 		}
 #endif
@@ -1111,4 +1114,72 @@ void xtSplitBuilder::DestroyMem()
 		mSharedSplitPoints[i] = NULL;
 	}
 
+}
+
+void xtSplitBuilder::ConcatenationPolyLine(std::vector<std::tuple<int,int>> &segonsurfindices, const int numofverts)
+{
+	// concate the line
+	//std::vector<std::tuple<int,int>> vertslot;
+	//for ( size_t i=0; i<segonsurfverts.size(); ++i ) {
+	//	std::tuple<int,int> t(-1,-1);
+	//	vertslot.push_back(t);
+	//}
+	std::vector<std::vector<int>> vertslotv;
+	for ( size_t i=0; i<numofverts; ++i ) {
+		std::vector<int> v;
+		v.reserve(2);
+		vertslotv.push_back(v);
+	}
+	for ( size_t i=0; i<segonsurfindices.size(); ++i ) {
+		std::tuple<int,int> seg = segonsurfindices[i];
+		vertslotv[std::get<0>(seg)].push_back(i);
+		vertslotv[std::get<1>(seg)].push_back(i);
+	}
+	// first is the seg second is the seg's start vertex idx
+	std::vector<std::tuple<int, int>> startendsegidx;
+	for ( size_t i=0; i<vertslotv.size(); ++i ) {
+		if ( vertslotv[i].size()==1 ) {
+			std::tuple<int, int> t(vertslotv[i][0],i);
+			startendsegidx.push_back(t);
+		} 
+	}
+	assert(startendsegidx.size());
+	int startsegidx = std::get<0>(startendsegidx[0]);
+	int startveridx = std::get<1>(startendsegidx[0]);
+	if ( std::get<0>(segonsurfindices[startsegidx])!=startveridx ) {
+		std::swap(
+			std::get<0>(segonsurfindices[startsegidx]),
+			std::get<1>(segonsurfindices[startsegidx]));
+	}
+	int endvertidx = std::get<1>(segonsurfindices[startsegidx]);
+	std::vector<int> seqsegvec;
+	seqsegvec.push_back(startsegidx);
+
+	std::list<int> segpool;
+	for ( size_t i=0; i<segonsurfindices.size(); ++i ) {
+		segpool.push_back(i);
+	}
+	std::list<int>::iterator segfit = std::find( segpool.begin(), segpool.end(), startsegidx );
+	segpool.erase(segfit);
+	while( !segpool.empty() ) {
+		// find endvertidx
+		for ( std::list<int>::iterator it=segpool.begin(); it!=segpool.end(); ++it ) {
+			std::tuple<int,int> &t = segonsurfindices[*it];
+			if ( std::get<0>(t)==endvertidx ) {
+				endvertidx = std::get<1>(t);
+				seqsegvec.push_back(*it);
+				segpool.erase(it);
+				break;
+			} else if ( std::get<1>(t)==endvertidx ) {
+				std::swap( std::get<0>(t), std::get<1>(t) );
+				endvertidx = std::get<1>(t);
+				seqsegvec.push_back(*it);
+				segpool.erase(it);
+				break;
+			}
+		}
+	}
+	for ( size_t i=0; i<segonsurfindices.size()/2; ++i ) {
+		std::swap( segonsurfindices[i], segonsurfindices[seqsegvec[i]] );
+	}
 }

@@ -286,8 +286,12 @@ private:
 	void SplitPnt(xtCollisionEntity *psI, xtCollisionEntity *psJ, xtSFMap &sfmap, xtGeometrySurfaceDataS *surfI, xtGeometrySurfaceDataS *surfJ);
 	void TessellateCollidedFace(xtCollisionEntity *ps, xtGeometrySurfaceDataS *surf );
 	void TessellateCollidedFaceRobust( xtCollisionEntity *ps, xtCollisionEngine *ce, const int type);
+	void FilterAdjacentPnts();
 	void InitializeCollisionEntity();
 	void DestroyMem();
+
+private:
+	static void ConcatenationPolyLine(std::vector<std::tuple<int,int>> &segonsurfindices, const int numofverts);
 
 private:
 
