@@ -31,6 +31,9 @@ public:
 
 	std::vector<xtCollidePair> &GetColliedPairs() { return mCollide; };
 
+	xtGeometrySurfaceDataS *GetSurfI() { return mSurfI; };
+	xtGeometrySurfaceDataS *GetSurfJ() { return mSurfJ; };
+
 private:
 	void BuildSurfBBOX();
 	void BuildRTree();

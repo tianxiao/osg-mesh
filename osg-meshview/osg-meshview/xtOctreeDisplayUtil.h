@@ -17,6 +17,7 @@ namespace osg
 	class Geode;
 	class Node;
 	class Cylinder;
+	class Group;
 };
 
 namespace xtOctreeDisplayUtility
@@ -44,7 +45,13 @@ namespace xtOctreeDisplayUtility
 
 	osg::Geode *RenderSplitSegmentsWithCyliner(xtSplitBuilder *splitBuilder, xtColor color, float linewidth=4.0);
 
+	osg::Geode *RenderSplitSegmentsWBODebug(xtSplitBuilder *splitBuilder, xtColor color, float linewidth=4.0);
+
 	osg::Cylinder *CreateCyliner(xtVector3d &start, xtVector3d &end, double radius);
 
+	osg::Geode *RenderArrow( xtVector3d &start, xtVector3d &end, double radius );
+
 	osg::Geode *RenderPlanarTriSplitSegs(xtSplitBuilder *sb);
+
+	osg::Group *RenderPlanarTris(xtSplitBuilder *sb);
 };

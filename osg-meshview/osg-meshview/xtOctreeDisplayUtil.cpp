@@ -4,6 +4,7 @@
 #include "xtGeometrySurfaceData.h"
 #include "../buildpyramidGeometry/osgcommon.h"
 #include "xtSplitBuilder.h"
+#include "xtCollisionEngine.h"
 
 xtOctreeDisplayUtil::xtOctreeDisplayUtil(void)
 {
@@ -388,6 +389,44 @@ osg::Geode *xtOctreeDisplayUtility::RenderSplitSegmentsWithCyliner(xtSplitBuilde
 	return geode;
 }
 
+osg::Geode *xtOctreeDisplayUtility::RenderSplitSegmentsWBODebug(xtSplitBuilder *splitBuilder, xtColor color, float radius/*=4.0*/)
+{
+	osg::Geode *geode = new osg::Geode;
+	xtGeometrySurfaceDataS *surfI = splitBuilder->mCE->GetSurfI();
+	xtGeometrySurfaceDataS *surfJ = splitBuilder->mCE->GetSurfJ();
+
+	for ( size_t i=0; i<splitBuilder->mPSI->surfslot.size(); ++i ) {
+		xtSurfaceSlot *ss = splitBuilder->mPSI->surfslot[i];
+		for ( size_t segi=0; segi<ss->segwbo.size(); ++segi ) {
+			xtSegmentWBO *segment = ss->segwbo[segi];
+			//xtVector3d *p0 = segment->v[0].type
+			xtVector3d parray[2];
+			for ( int ei=0; ei<2; ++ei ) {
+				if ( ON_SURFACE_V==segment->v[ei].type ) {
+					parray[ei] = GetWorldCoordinate(surfJ,segment->v[ei].idx);
+				}
+				if ( ON_V==segment->v[ei].type ) {
+					parray[ei] = GetWorldCoordinate(surfI,segment->v[ei].idx);
+				}
+				if ( ON_BOUNDARY==segment->v[ei].type || ON_SURFACE==segment->v[ei].type ) {
+					parray[ei] = *(segment->v[ei].v);
+				}
+			}
+			geode->addDrawable( new osg::ShapeDrawable( CreateCyliner(parray[0],parray[1],radius) ) );
+			
+		}
+	}
+
+
+	// Set the color of the cylinder that extends between the two points.
+	osg::Material *pMaterial = new osg::Material;
+	osg::Vec4 CylinderColor((float)color.r,(float)color.g,(float)color.b,(float)color.alpha);
+	pMaterial->setDiffuse( osg::Material::FRONT, CylinderColor);
+	geode->getOrCreateStateSet()->setAttribute( pMaterial, osg::StateAttribute::OVERRIDE );
+
+	return geode;
+}
+
 #if XT_DEBUG_PERCE_POINT
 osg::Geode *xtOctreeDisplayUtility::RenderRaySegment(xtSplitBuilder *sb)
 {
@@ -455,6 +494,22 @@ osg::Geode *xtOctreeDisplayUtility::RenderPlanarTriSplitSegs(xtSplitBuilder *sb)
 
 
 	return geode;
+}
+
+osg::Group *xtOctreeDisplayUtility::RenderPlanarTris(xtSplitBuilder *sb)
+{
+	osg::Group *group = new osg::Group;
+	for ( size_t i=0; i<sb->mDebugPlanarTris.size(); ++i ) {
+		xtPlanarTri &tri = sb->mDebugPlanarTris[i];
+		for ( size_t triidx=0; triidx<tri.tris.size(); ++triidx ) {
+			xtIndexTria3 &tria = tri.tris[triidx];
+			group->addChild( RenderArrow(tri.verts[tria.a[0]],tri.verts[tria.a[1]],0.001) );
+			group->addChild( RenderArrow(tri.verts[tria.a[1]],tri.verts[tria.a[2]],0.001) );
+			group->addChild( RenderArrow(tri.verts[tria.a[2]],tri.verts[tria.a[0]],0.001) );
+		}
+	}
+
+	return group;
 }
 
 osg::Geode *xtOctreeDisplayUtility::RednerSplitPntsAsSphere(xtSplitBuilder *splitBuilder, xtColor color, float radius/*=4.0*/)
@@ -536,6 +591,40 @@ osg::Cylinder *xtOctreeDisplayUtility::CreateCyliner(xtVector3d &start, xtVector
 	return cylin;
 }
 
+osg::Geode *xtOctreeDisplayUtility::RenderArrow( xtVector3d &start, xtVector3d &end, double radius )
+{
+	osg::Geode *geode = new osg::Geode;
+
+	osg::Cylinder *cylin;// = new osg::Cylinder;
+
+	xtVector3d dir = end-start;
+	double height = dir.norm();
+	xtVector3d center = (start+end)/2.0;
+
+	xtVector3d zdir(0.0,0.0,1.0);
+	xtVector3d quaterAxis = dir.cross(zdir)/height;
+
+	double angle = acos(dir.dot(zdir)/height);
+	cylin = new osg::Cylinder(osg::Vec3((float)center.x(),(float)center.y(),(float)center.z()), (float)radius, (float)height);
+	cylin->setRotation(osg::Quat( -angle, osg::Vec3((float)quaterAxis.x(), (float)quaterAxis.y(), (float)quaterAxis.z()) ) );
+	geode->addDrawable( new osg::ShapeDrawable( cylin ) );
+
+	
+	const float coneheight = height*0.1;
+	xtVector3d conecenter = start+dir*0.9;
+	osg::Cone *cone = new osg::Cone( osg::Vec3((float)conecenter.x(),(float)conecenter.y(),(float)conecenter.z()),radius*2.5,coneheight);
+	cone->setRotation( osg::Quat( -angle, osg::Vec3((float)quaterAxis.x(), (float)quaterAxis.y(), (float)quaterAxis.z()) ) );
+	geode->addDrawable( new osg::ShapeDrawable( cone ) );
+
+	const xtColor color(0.5,0.7,0.0,1.0);
+	// Set the color of the cylinder that extends between the two points.
+	osg::Material *pMaterial = new osg::Material;
+	osg::Vec4 CylinderColor((float)color.r,(float)color.g,(float)color.b,(float)color.alpha);
+	pMaterial->setDiffuse( osg::Material::FRONT, CylinderColor);
+	geode->getOrCreateStateSet()->setAttribute( pMaterial, osg::StateAttribute::OVERRIDE );
+
+	return geode;
+}
 
 
 

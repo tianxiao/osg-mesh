@@ -13,9 +13,13 @@ void xtCollisionEntity::DestroyMem()
 {
 	for ( size_t i=0; i<surfslot.size(); ++i ) {
 		// TODO!!!
-		for ( size_t svidx=0; surfslot[i]->pointsOnSurfVerbos.size(); ++svidx ) {
+		for ( size_t svidx=0; svidx<surfslot[i]->pointsOnSurfVerbos.size(); ++svidx ) {
 			delete surfslot[i]->pointsOnSurfVerbos[svidx];
 			surfslot[i]->pointsOnSurfVerbos[svidx] = NULL;
+		}
+		for ( size_t segwboi=0; segwboi<surfslot[i]->segwbo.size(); ++segwboi ) {
+			delete surfslot[i]->segwbo[segwboi];
+			surfslot[i]->segwbo[segwboi] = NULL;
 		}
 		
 		delete surfslot[i];
@@ -84,6 +88,13 @@ void xtCollisionEntity::AddSplitSegmentRBToFace(const int fi, xtSegmentRobust *s
 	ss->segrobust.push_back(segrb);
 }
 
+void xtCollisionEntity::AddSegWBOToFace(const int fi, xtSegmentWBO *seg)
+{
+	xtSurfaceSlot *ss = GetFaceSlotExit(fi);
+	assert(ss);
+	ss->segwbo.push_back(seg);
+}
+
 
 xtSurfaceSlot *xtCollisionEntity::GetFaceSlotExit(int fi)
 {
@@ -144,16 +155,18 @@ void xtSplitBuilder::Split()
 {
 	SplitPnt(mPSI,mPSJ,mSFMI,mCE->mSurfI,mCE->mSurfJ);
 	SplitPnt(mPSJ,mPSI,mSFMJ,mCE->mSurfJ,mCE->mSurfI);
-	bool isrobust=true;
-	if ( isrobust ) {
+	int methodid = 2;
+	if ( 1==methodid ) {
 		ConstructSplitSegmentsRobust();
 		TessellateCollidedFaceRobust(mPSI,mCE,0);
 		//TessellateCollidedFaceRobust(mPSJ,mCE,1);
-	} else {
+	} else if ( 0==methodid ) {
 		ConstructSplitSegments();	
 		TessellateCollidedFace(mPSI,mCE->mSurfI);
 		TessellateCollidedFace(mPSJ,mCE->mSurfJ);
-	}
+	} else if ( 2==methodid ) {
+		ConstructSplitSegmentsWithEndPoint();
+	};
 	
 }
 
@@ -590,7 +603,6 @@ void xtSplitBuilder::TessellateCollidedFaceRobust( xtCollisionEntity *ps, xtColl
 
 		ConcatenationPolyLine(segonsurfindices,segonsurfverts.size());
 
-
 		xtSeg2WithMarker ontrisegmarker;
 		ontrisegmarker.marker = 1;// one means seg on triangle surface
 		int indxcounter=0;
@@ -667,6 +679,8 @@ void xtSplitBuilder::TessellateCollidedFaceRobust( xtCollisionEntity *ps, xtColl
 			segmarkerlist.push_back(ontrisegmarker);
 		}
 
+
+
 #if XT_DEBUG_PLANAR_TRI_SET
 		xtPlanarTriSegData ptriseg;
 		ptriseg.verts2d = verts2d;
@@ -682,11 +696,11 @@ void xtSplitBuilder::TessellateCollidedFaceRobust( xtCollisionEntity *ps, xtColl
 		ptriseg3d.segmarkerlist = segmarkerlist;
 		mDebugPlanarTriSeg3d.push_back(ptriseg3d);
 		
-		if ( ssidx==3 ) {
+		if ( ssidx==1 ) {
 			return;
 		}
 #endif
-
+		//FilterAdjacentVerts2d(verts2d, segmarkerlist);
 
 		xtTrianglePLSG splittriutil(verts2d, segmarkerlist, outtris);
 
@@ -697,7 +711,14 @@ void xtSplitBuilder::TessellateCollidedFaceRobust( xtCollisionEntity *ps, xtColl
 			}
 			ss->tris.push_back(tria);
 		}
+		xtPlanarTri planartris;
+		planartris.tris = ss->tris;
+		planartris.verts = ptriseg3d.verts;
+		mDebugPlanarTris.push_back(planartris);
 	}
+	
+	
+
 }
 
 bool counteriftrue( bool & istrue )
@@ -908,6 +929,270 @@ void xtSplitBuilder::ConstructSplitSegmentsRobust()
 
 			mPSI->AddSplitSegmentRBToFace(fIidx,newsegrb);
 			mPSJ->AddSplitSegmentRBToFace(fJidx,newsegrb);
+
+		} else if ( 3==numIntersectWI ) {
+			// impossible if they are not lay int the same plane
+			assert(false);
+		}  else {
+			// unknow situation
+			printf( "I\t%d, J\t%d\n",numIntersectWI,numIntersectWJ);
+			assert(false);
+		}
+
+
+	}
+}
+
+void xtSplitBuilder::ConstructSplitSegmentsWithEndPoint()
+{
+	for ( size_t ki=0; ki<mCE->mCollide.size(); ++ki ) {
+		const int fIidx = mCE->mCollide[ki].i;
+		const int fJidx = mCE->mCollide[ki].j;
+		xtFaceFaceKey ffkey = {fIidx,fJidx};
+		xtFaceFaceKey ffkeyinv = {fJidx, fIidx};
+		xtFFMap::iterator findkey = mFFM.find(ffkey);
+		// bug
+		//xtFFMap::iterator findkeyinv = mFFM.find(ffkeyinv);
+		if ( findkey!=mFFM.end() /*|| findkeyinv!=mFFM.end() */) continue;
+		
+		// let J's tri 3 edge test the I's face
+		// 0) may degenerate
+		// 1) one case in J 
+		// 2) generate the common split segment
+		std::vector<bool> edgestateI; edgestateI.reserve(3);
+		std::vector<xtVector3d *> spIlist; spIlist.reserve(3);
+		std::vector<bool> edgestateJ; edgestateJ.reserve(3);
+		std::vector<xtVector3d *> spJlist; spJlist.reserve(3);
+
+		xtIndexTria3 triaI = mCE->mSurfI->indices[fIidx];
+		xtIndexTria3 triaJ = mCE->mSurfJ->indices[fJidx];
+
+		// check start end collidessIdx as a key;
+		for ( int i=0; i<3; ++i ) {
+			xtSegmentFaceK key = { triaJ.a[i], triaJ.a[(i+1)%3], fIidx };
+			xtSegmentFaceK keyinv = { triaJ.a[(i+1)%3], triaJ.a[i], fIidx };
+			xtSFMap::iterator findit;
+			if ( (findit=mSFMI.find(key))!=mSFMI.end() ) {
+				edgestateI.push_back(true);
+				spIlist.push_back(findit->second);
+			} else if ( (findit=mSFMI.find(keyinv))!=mSFMI.end() ) {
+				edgestateI.push_back(true);
+				spIlist.push_back(findit->second);
+			} else {
+				edgestateI.push_back(false);
+				spIlist.push_back(NULL);
+			}
+		}
+
+		for ( int i=0; i<3; ++i ) {
+			xtSegmentFaceK key = { triaI.a[i], triaI.a[(i+1)%3], fJidx };
+			xtSegmentFaceK keyinv = { triaI.a[(i+1)%3], triaI.a[i], fJidx };
+			xtSFMap::iterator findit;
+			if ( (findit=mSFMJ.find(key))!=mSFMJ.end() ) {
+				edgestateJ.push_back(true);
+				spJlist.push_back(findit->second);
+			} else if ( (findit=mSFMJ.find(keyinv))!=mSFMJ.end() ) {
+				edgestateJ.push_back(true);
+				spJlist.push_back(findit->second);
+			} else {
+				edgestateJ.push_back(false);
+				spJlist.push_back(NULL);
+			}
+		}
+
+		//int numIntersectWI, numIntersectWJ;
+		const int numIntersectWI = std::count(edgestateI.begin(),edgestateI.end(),true);
+		const int numIntersectWJ = std::count(edgestateJ.begin(),edgestateJ.end(),true);
+		if ( 0==numIntersectWI && 2==numIntersectWJ ) {
+			//std::vector<bool>::iterator findfalse = std::find(edgestateI.begin(),edgestateI.end(),false);
+			int falseIdxJ;
+			for ( size_t i=0; i<edgestateJ.size(); ++i ) {
+				if ( !edgestateJ[i] ) {
+					falseIdxJ = i;
+				}
+			}
+			xtSegment *newseg = new xtSegment;
+			newseg->seg0 = spJlist[(falseIdxJ+1)%3];
+			newseg->seg1 = spJlist[(falseIdxJ+2)%3];
+			mSharedSplitSegList.push_back(newseg);
+
+			mPSI->AddSplitSegmentToFace(fIidx,newseg);
+			mPSJ->AddSplitSegmentToFace(fJidx,newseg);
+			mFFM[ffkey] = newseg;
+
+
+			//======================================================
+			xtSegmentWBO *nsegwboi = new xtSegmentWBO;
+			nsegwboi->v[0].type = ON_SURFACE;
+			nsegwboi->v[0].v = spJlist[(falseIdxJ+1)%3];
+			nsegwboi->v[0].idx = -1;
+			nsegwboi->v[1].type = ON_SURFACE;
+			nsegwboi->v[1].v = spJlist[(falseIdxJ+2)%3];
+			nsegwboi->v[1].idx = -1;
+			mPSJ->AddSegWBOToFace(fJidx, nsegwboi);
+
+			xtSegmentWBO *nsegwboj = new xtSegmentWBO;
+			nsegwboj->v[0].type = ON_BOUNDARY;
+			nsegwboj->v[0].v = spJlist[(falseIdxJ+1)%3];
+			nsegwboj->v[0].idx = (falseIdxJ+1)%3;
+			nsegwboj->v[1].type = ON_BOUNDARY;
+			nsegwboj->v[1].v = spJlist[(falseIdxJ+2)%3];
+			nsegwboj->v[1].idx = (falseIdxJ+1)%3;
+			mPSI->AddSegWBOToFace(fIidx, nsegwboj);
+
+		} else if ( 1==numIntersectWI&&1==numIntersectWJ ) {
+			std::vector<bool>::iterator iiiter = std::find(edgestateI.begin(), edgestateI.end(), true);
+			const size_t iiidx = std::distance(edgestateI.begin(),iiiter);
+
+			std::vector<bool>::iterator ijiter = std::find(edgestateJ.begin(), edgestateJ.end(), true);
+			const size_t ijidx = std::distance(edgestateJ.begin(),ijiter);
+
+			xtSegment *newseg = new xtSegment;
+			newseg->seg0 = spIlist[iiidx];
+			newseg->seg1 = spJlist[ijidx];
+			mSharedSplitSegList.push_back(newseg);
+
+			mPSI->AddSplitSegmentToFace(fIidx,newseg);
+			mPSJ->AddSplitSegmentToFace(fJidx,newseg);
+			mFFM[ffkey] = newseg;
+
+
+			//======================================================
+			xtSegmentWBO *nsegwboi = new xtSegmentWBO;
+			nsegwboi->v[0].type = ON_BOUNDARY;
+			nsegwboi->v[0].v = spIlist[iiidx];
+			nsegwboi->v[0].idx = iiidx;
+			nsegwboi->v[1].type = ON_SURFACE;
+			nsegwboi->v[1].v = spJlist[ijidx];
+			nsegwboi->v[1].idx = -1;
+			mPSJ->AddSegWBOToFace(fJidx, nsegwboi);
+
+			xtSegmentWBO *nsegwboj = new xtSegmentWBO;
+			nsegwboj->v[0].type = ON_BOUNDARY;
+			nsegwboj->v[0].v = spJlist[ijidx];
+			nsegwboj->v[0].idx = ijidx;
+			nsegwboj->v[1].type = ON_SURFACE;
+			nsegwboj->v[1].v = spIlist[iiidx];
+			nsegwboj->v[1].idx = -1;
+			mPSI->AddSegWBOToFace(fIidx, nsegwboj);
+			
+		} else if ( 2==numIntersectWI && 0==numIntersectWJ ) {
+			int falseIdx;
+			for ( size_t i=0; i<edgestateI.size(); ++i ) {
+				if ( !edgestateI[i] ) {
+					falseIdx = i;
+				}
+			}
+			xtSegment *newseg = new xtSegment;
+			newseg->seg0 = spIlist[(falseIdx+1)%3];
+			newseg->seg1 = spIlist[(falseIdx+2)%3];
+			mSharedSplitSegList.push_back(newseg);
+
+			mPSI->AddSplitSegmentToFace(fIidx,newseg);
+			mPSJ->AddSplitSegmentToFace(fJidx,newseg);
+			mFFM[ffkey] = newseg;
+
+			//======================================================
+			xtSegmentWBO *nsegwboi = new xtSegmentWBO;
+			nsegwboi->v[0].type = ON_BOUNDARY;
+			nsegwboi->v[0].v = spIlist[(falseIdx+1)%3];
+			nsegwboi->v[0].idx = (falseIdx+1)%3;
+			nsegwboi->v[1].type = ON_BOUNDARY;
+			nsegwboi->v[1].v = spIlist[(falseIdx+2)%3];
+			nsegwboi->v[1].idx = (falseIdx+2)%3;
+			mPSJ->AddSegWBOToFace(fJidx, nsegwboi);
+
+			xtSegmentWBO *nsegwboj = new xtSegmentWBO;
+			nsegwboj->v[0].type = ON_SURFACE;
+			nsegwboj->v[0].v = spIlist[(falseIdx+1)%3];
+			nsegwboj->v[0].idx = -1;
+			nsegwboj->v[1].type = ON_SURFACE;
+			nsegwboj->v[1].v = spIlist[(falseIdx+2)%3];
+			nsegwboj->v[1].idx = -1;
+			mPSI->AddSegWBOToFace(fIidx, nsegwboj);
+			
+		} else if ( 3==numIntersectWI&&0==numIntersectWJ) {
+			printf( "Co point I\n" );
+
+		} else if ( 0==numIntersectWI&&3==numIntersectWJ) {
+			printf( "Co point J\n" );
+
+		} else if ( 2==numIntersectWI&&1==numIntersectWJ) {
+			//printf( "I touch on\n" ); 
+			// one point of I on triangle J
+			// There at least two edge intersect with J degenerate case
+			std::vector<bool>::iterator findIit = std::find(edgestateI.begin(),edgestateI.end(),false);
+			const size_t falseIidx = std::distance(edgestateI.begin(),findIit);
+			
+			std::vector<bool>::iterator findJit = std::find(edgestateJ.begin(),edgestateJ.end(),true);
+			const size_t trueJidx = std::distance(edgestateJ.begin(),findJit);
+
+			xtSegment *newseg = new xtSegment;
+			newseg->seg0 = spIlist[(falseIidx+1)%3];
+			newseg->seg1 = spJlist[trueJidx];
+			mSharedSplitSegList.push_back(newseg);
+
+			mPSI->AddSplitSegmentToFace(fIidx,newseg);
+			mPSJ->AddSplitSegmentToFace(fJidx,newseg);
+			mFFM[ffkey] = newseg;
+
+			//======================================================
+			xtSegmentWBO *nsegwboi = new xtSegmentWBO;
+			nsegwboi->v[0].type = ON_V;
+			nsegwboi->v[0].v = NULL;
+			nsegwboi->v[0].idx = (falseIidx+2)%3;
+			nsegwboi->v[1].type = ON_SURFACE;
+			nsegwboi->v[1].v = spJlist[trueJidx];
+			nsegwboi->v[1].idx = -1;
+			mPSJ->AddSegWBOToFace(fJidx, nsegwboi);
+
+			xtSegmentWBO *nsegwboj = new xtSegmentWBO;
+			nsegwboj->v[0].type = ON_SURFACE_V;
+			nsegwboj->v[0].v = NULL;
+			nsegwboj->v[0].idx = triaI.a[(falseIidx+2)%3];
+			nsegwboj->v[1].type = ON_BOUNDARY;
+			nsegwboj->v[1].v = spJlist[trueJidx];
+			nsegwboj->v[1].idx = -1;
+			mPSI->AddSegWBOToFace(fIidx, nsegwboj);
+
+		} else if ( 1==numIntersectWI&&2==numIntersectWJ) {
+			//printf( "J touch on\n" );
+			// one point of J on triangle area I
+			// There at lease two edge intersect by this degenerate case
+			// In this branch just one edge collision
+			std::vector<bool>::iterator findIit = std::find(edgestateI.begin(),edgestateI.end(),true);
+			const size_t trueIidx = std::distance(edgestateI.begin(),findIit);
+			
+			std::vector<bool>::iterator findJit = std::find(edgestateJ.begin(),edgestateJ.end(),false);
+			const size_t falseJidx = std::distance(edgestateJ.begin(),findJit);
+
+			xtSegment *newseg = new xtSegment;
+			newseg->seg0 = spIlist[trueIidx];
+			newseg->seg1 = spJlist[(falseJidx+1)%3];
+			mSharedSplitSegList.push_back(newseg);
+
+			mPSI->AddSplitSegmentToFace(fIidx,newseg);
+			mPSJ->AddSplitSegmentToFace(fJidx,newseg);
+			mFFM[ffkey] = newseg;
+
+			//======================================================
+			xtSegmentWBO *nsegwboi = new xtSegmentWBO;
+			nsegwboi->v[0].type = ON_BOUNDARY;
+			nsegwboi->v[0].v = spIlist[trueIidx];
+			nsegwboi->v[0].idx = -1;
+			nsegwboi->v[1].type = ON_SURFACE_V;
+			nsegwboi->v[1].v = NULL;
+			nsegwboi->v[1].idx = triaJ.a[(falseJidx+2)%3];
+			mPSJ->AddSegWBOToFace(fJidx, nsegwboi);
+
+			xtSegmentWBO *nsegwboj = new xtSegmentWBO;
+			nsegwboj->v[0].type = ON_SURFACE;
+			nsegwboj->v[0].v = spIlist[trueIidx];
+			nsegwboj->v[0].idx = -1;
+			nsegwboj->v[1].type = ON_V;
+			nsegwboj->v[1].v = NULL;
+			nsegwboj->v[1].idx = (falseJidx+2)%3;
+			mPSI->AddSegWBOToFace(fIidx, nsegwboj);
 
 		} else if ( 3==numIntersectWI ) {
 			// impossible if they are not lay int the same plane
@@ -1183,3 +1468,52 @@ void xtSplitBuilder::ConcatenationPolyLine(std::vector<std::tuple<int,int>> &seg
 		std::swap( segonsurfindices[i], segonsurfindices[seqsegvec[i]] );
 	}
 }
+
+void xtSplitBuilder::FilterAdjacentPnts(std::vector<std::tuple<int,int>> &segonsurfindices, std::vector<xtVertexRobust *> &segonsurfverts )
+{
+	
+}
+
+void xtSplitBuilder::FilterAdjacentVerts2d(std::vector<xtTriPnt2> &verts2d, std::vector<xtSeg2WithMarker> &segmarkerlist)
+{
+	std::vector<xtSeg2WithMarker> cacheback;
+	const double precision = 0.000001;
+	for ( size_t i=3; i<segmarkerlist.size(); ++i ) {
+		xtSeg2WithMarker &segmarker = segmarkerlist[i];
+		double squaredist = SquareDistance(verts2d[segmarker.seg[0]],verts2d[segmarker.seg[1]]);
+		if ( squaredist>precision ) {
+			cacheback.push_back(segmarker);
+		} else {
+			if ( i>0 && i<segmarkerlist.size()-1 ) {
+				xtSeg2WithMarker &pre = segmarkerlist[i-1];
+				xtSeg2WithMarker &pos = segmarkerlist[i+1];
+				pos.seg[0] = pre.seg[1];
+			} else if ( i==0 ) {
+				//xtSeg2WithMarker &pos = segmarkerlist[i+1];
+				//pos.seg[0] = segmarker.seg[0];
+			} else if ( i==segmarkerlist.size()-1 ) {
+				//xtSeg2WithMarker &pre = segmarkerlist[i-1];
+				//pre.seg[1] = segmarker.seg[0];
+			}
+		}
+	}
+	segmarkerlist.erase(segmarkerlist.begin()+3,segmarkerlist.end());
+	segmarkerlist.insert(segmarkerlist.begin()+3,cacheback.begin(),cacheback.end());
+}
+
+// Got distance from 
+// Got index from iterator in the vector
+// http://stackoverflow.com/questions/2152986/best-way-to-get-the-index-of-an-iterator
+/**
+I would prefer it - vec.begin() precisely for the opposite reason given by Naveen: 
+so it wouldn't compile if you change the vector into a list. If you do this during 
+every iteration, you could easily end up turning an O(n) algorithm into an O(n^2) 
+algorithm.
+Another option, if you don't jump around in the container during iteration, would be 
+to keep the index as a second loop counter.
+*/
+// C++ STL Vectors: Get iterator from index?
+// http://stackoverflow.com/questions/671423/c-stl-vectors-get-iterator-from-index
+/**
+vector<Type>::iterator nth = v.begin() + index;
+*/

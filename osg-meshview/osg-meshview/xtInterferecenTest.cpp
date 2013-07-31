@@ -55,7 +55,7 @@ void xtInterferecenTest::SetUpScene()
 
 	if ( mCE->Collide() ) {
 		std::vector<xtCollidePair> &pairs = mCE->GetColliedPairs();
-		sceneRoot->addChild( xtOctreeDisplayUtility::RenderCollided(mSurfI,mSurfJ,pairs) );
+		//sceneRoot->addChild( xtOctreeDisplayUtility::RenderCollided(mSurfI,mSurfJ,pairs) );
 		mSB = new xtSplitBuilder;
 		mSB->SetCE(mCE); mSB->Split();
 		//sceneRoot->addChild( xtOctreeDisplayUtility::RenderSplitSegments(mSB,xtColor(0.0,1.0,1.0,1.0),5.0f) );
@@ -67,6 +67,8 @@ void xtInterferecenTest::SetUpScene()
 #if XT_DEBUG_PERCE_POINT
 		sceneRoot->addChild( xtOctreeDisplayUtility::RenderRaySegment(mSB) );
 #endif
+		sceneRoot->addChild( xtOctreeDisplayUtility::RenderPlanarTris(mSB) );
+		sceneRoot->addChild( xtOctreeDisplayUtility::RenderSplitSegmentsWBODebug(mSB,xtColor(0.5,0.7,0.1,1.),0.001f) );
 	}
 
 
