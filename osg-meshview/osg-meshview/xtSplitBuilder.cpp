@@ -166,6 +166,7 @@ void xtSplitBuilder::Split()
 		TessellateCollidedFace(mPSJ,mCE->mSurfJ);
 	} else if ( 2==methodid ) {
 		ConstructSplitSegmentsWithEndPoint();
+		TessellateFaceWithWBO(mPSI, mCE->mSurfI, mCE->mSurfJ);
 	};
 	
 }
@@ -719,6 +720,257 @@ void xtSplitBuilder::TessellateCollidedFaceRobust( xtCollisionEntity *ps, xtColl
 	
 	
 
+}
+
+struct xtState2
+{
+	int s[2];
+};
+
+void OrderxtSegmentWBOList( std::vector<xtSegmentWBO *> &segwbo )
+{
+
+	std::vector<xtState2> segstatelist;
+	segstatelist.reserve(segwbo.size());
+	for ( size_t i=0; i<segwbo.size(); ++i ) {
+		xtState2 state = {-2,-2};
+		segstatelist.push_back(state);
+	}
+
+	int vertexcount=0;
+	int singlecount=0;
+	int singlep[2];
+	int signlepatseg[2];
+	for ( int segi=0; segi<segwbo.size(); ++segi ) {
+		xtSegmentWBO *seg = segwbo[segi];
+
+		xtState2 &state = segstatelist[segi];
+		int marker[2] = {-1,-1};
+		int atidx[2] = {-1,-1};
+		
+		// if state has been checked bypass;
+		//if ( state.s[0]>-2 ) continue;
+		//if ( state.s[1]>-2 ) continue;
+
+		for ( int sci=segi+1; sci<segwbo.size(); ++sci ) {
+			for ( int endi=0; endi<2; ++endi ) {
+				for ( int scii=0; scii<2; ++scii ) {
+					if ( seg->v[endi]==segwbo[sci]->v[scii] ) {
+						marker[endi]=scii;
+						atidx[endi]=sci;
+					}
+				}
+			}
+		}
+		for ( int endi=0; endi<2; ++endi ) {
+			if ( marker[endi]>-1 && segstatelist[segi].s[endi]==-2 ) {
+				segstatelist[segi].s[endi]=vertexcount;
+				segstatelist[atidx[endi]].s[marker[endi]]=vertexcount;
+				vertexcount++;
+			} else if ( marker[endi]==-1 && segstatelist[segi].s[endi]==-2 ) {
+				segstatelist[segi].s[endi]=vertexcount;
+				vertexcount++;
+				singlep[singlecount]      = endi;
+				signlepatseg[singlecount] = segi;
+				singlecount++;
+			}
+		}
+	}
+	
+	assert(singlecount==2);
+	int startsegidx = signlepatseg[0];
+	bool isStart = singlep[0]==0;
+	for ( size_t i=0; i<segwbo.size(); ++i ) {
+		if ( !isStart ) {
+			std::swap( segwbo[startsegidx]->v[0], segwbo[startsegidx]->v[1] );
+			std::swap( segstatelist[startsegidx].s[0], segstatelist[startsegidx].s[1] );
+		}
+		std::swap( segwbo[i], segwbo[startsegidx] );
+		std::swap( segstatelist[i], segstatelist[startsegidx] );
+
+		int endpidx = segstatelist[i].s[1];
+
+		if ( segwbo.size()-1==i ) break;
+
+		for ( size_t si=i+1; si<segstatelist.size(); ++si ) {
+			if ( segstatelist[si].s[0]==endpidx ) {
+				startsegidx = si;
+				isStart=true;
+			} else if ( segstatelist[si].s[1]==endpidx ) {
+				startsegidx = si;
+				isStart=false;
+			}
+		}
+
+	}
+
+}
+
+xtTriPnt2 GetPlanarPoint()
+{
+	xtTriPnt2 t;
+	return t;
+}
+
+void xtSplitBuilder::TessellateFaceWithWBO( xtCollisionEntity *ps, xtGeometrySurfaceDataS *surf0, xtGeometrySurfaceDataS *surf1 )
+{
+	for ( size_t ssidx=0; ssidx<ps->surfslot.size(); ++ssidx ) {
+		xtSurfaceSlot *ss = ps->surfslot[ssidx];
+
+		std::vector<int> vertidxmap;
+
+		xtIndexTria3 &triaI = surf0->indices[ss->idx];
+		xtVector3d pa = GetWorldCoordinate(surf0,triaI.a[0]);//surfI->verts[triaI.a[0]];
+		xtVector3d pb = GetWorldCoordinate(surf0,triaI.a[1]);//surfI->verts[triaI.a[1]];
+		xtVector3d pc = GetWorldCoordinate(surf0,triaI.a[2]);//surfI->verts[triaI.a[2]];
+		vertidxmap.push_back(triaI.a[0]);
+		vertidxmap.push_back(triaI.a[1]);
+		vertidxmap.push_back(triaI.a[2]);
+
+		// construct local coordinate
+		xtVector3d pba = pb - pa;
+		xtVector3d pca = pc - pa;
+		xtVector3d norm = pca.cross(pba);
+		norm.normalize();
+		xtVector3d xcoord = pca.cross(norm);
+		xcoord.normalize();
+		xtVector3d ycoord = norm.cross(xcoord);
+
+
+		xtMatrix3d rotminv;
+		rotminv << xcoord.x(),ycoord.x(),norm.x(),
+			xcoord.y(),ycoord.y(),norm.y(),
+			xcoord.z(),ycoord.z(),norm.z() ;
+		xtMatrix3d rotm;
+		rotm << 
+			xcoord.x(), xcoord.y(), xcoord.z(),
+			ycoord.x(), ycoord.y(), ycoord.z(),
+			norm.x(), norm.y(), norm.z();
+
+
+		std::vector<xtVertexRobust *> segonsurfverts;
+		std::vector<std::tuple<int,int>> segonsurfindices;
+		xtSegmentRobustPointer2Index indexsegonsurf;
+	 	indexsegonsurf.IndexPointer(ss->segrobust,segonsurfverts,segonsurfindices);
+		
+		std::vector<xtTriPnt2> verts2d;
+		std::vector<xtSeg2WithMarker> segmarkerlist;
+		std::vector<xtTriIndexO> outtris;
+
+		// 1) pack the geometry vertex
+		// pack triangle boundary vertex
+		xtVector3d pa2d = rotm*pa;
+		xtVector3d pb2d = rotm*pb;
+		xtVector3d pc2d = rotm*pc;
+		xtTriPnt2 a2d = { pa2d.x(), pa2d.y() };
+		xtTriPnt2 b2d = { pb2d.x(), pb2d.y() };
+		xtTriPnt2 c2d = { pc2d.x(), pc2d.y() };
+		const double zheight = (pa2d.z()+pb2d.z()+pc2d.z())/3.;
+		verts2d.push_back(a2d);
+		verts2d.push_back(b2d);
+		verts2d.push_back(c2d);
+
+		// pack split segment 
+		OrderxtSegmentWBOList( ss->segwbo );
+
+		// push back first boundary vertex
+		xtVector3d boundaryPntStart = *(ss->segwbo[0]->v[0].v);
+		boundaryPntStart=rotm*boundaryPntStart;
+		xtTriPnt2 bPntStart = {boundaryPntStart.x(),boundaryPntStart.y()};
+		verts2d.push_back(bPntStart);
+		// treat the start and end as a special case
+		for ( size_t i=1; i<ss->segwbo.size(); ++i ) {
+			xtVector3d pnt;// = *(ss->segwbo[i]->v[0].v);
+			if ( ss->segwbo[i]->v[0].type==ON_SURFACE ) {
+				pnt = *(ss->segwbo[i]->v[0].v);
+			} else if ( ss->segwbo[i]->v[0].type==ON_SURFACE_V ) {
+				pnt = GetWorldCoordinate( surf1, ss->segwbo[i]->v[0].idx );
+			} else if ( ss->segwbo[i]->v[0].type==ON_V ) {
+				pnt = GetWorldCoordinate( surf0, ss->segwbo[i]->v[0].idx );
+			} else if ( ss->segwbo[i]->v[0].type==ON_BOUNDARY ) {
+				assert(false);
+				// not handled in case there more complex configuration
+			}
+			pnt = rotm*pnt;
+			xtTriPnt2 pnt2d = {pnt.x(),pnt.y()};
+			verts2d.push_back(pnt2d);
+		}
+		xtVector3d boundaryPntEnd   = *(ss->segwbo[ss->segwbo.size()-1]->v[1].v);
+		boundaryPntEnd = rotm*boundaryPntEnd;
+		xtTriPnt2 bPntEnd = {boundaryPntEnd.x(),boundaryPntEnd.y()};
+		verts2d.push_back(bPntEnd);
+
+		// 2) pack the topology segment connectivity
+		xtSeg2WithMarker segmarker;
+		const int batedge0 = ss->segwbo[0]->v[0].idx;
+		segmarker.seg[0] = batedge0;
+		segmarker.seg[1] = 0+3;
+		segmarker.marker = 0;
+		segmarkerlist.push_back(segmarker);
+		segmarker.seg[0] = 0+3;
+		segmarker.seg[1] = batedge0+1;
+		segmarker.marker = 0;
+		segmarkerlist.push_back(segmarker);
+		const int batedge1idx = ss->segwbo.size()-1;
+		const int batedge1 = ss->segwbo[batedge1idx]->v[1].idx;
+		segmarker.seg[0] = batedge1;
+		segmarker.seg[1] = batedge1idx+3+1;
+		segmarker.marker = 0;
+		segmarkerlist.push_back(segmarker);
+		segmarker.seg[0] = batedge1idx+3+1;
+		segmarker.seg[1] = batedge1+1;
+		segmarker.marker = 0;
+		segmarkerlist.push_back(segmarker);
+		const int wedgeidx = (0+1+2)-(batedge0+batedge1);
+		segmarker.seg[0] = wedgeidx;
+		segmarker.seg[1] = (wedgeidx+1)%3;
+		segmarker.marker = 0;
+		segmarkerlist.push_back(segmarker);
+
+		for ( size_t i=0; i<ss->segwbo.size(); ++i ) {
+			segmarker.seg[0] = 3+i;
+			segmarker.seg[1] = 3+i+1;
+			segmarker.marker = 1;
+			segmarkerlist.push_back(segmarker);
+		}
+
+#if XT_DEBUG_PLANAR_TRI_SET
+		xtPlanarTriSegData ptriseg;
+		ptriseg.verts2d = verts2d;
+		ptriseg.segmarkerlist = segmarkerlist;
+		mDebugPlannarTriSeg.push_back(ptriseg);
+
+		xtPlanarTriSegData3d ptriseg3d;
+		for ( size_t i=0; i<verts2d.size(); ++i ) {
+			xtVector3d v;
+			v << verts2d[i].p[0] , verts2d[i].p[1], zheight;
+			ptriseg3d.verts.push_back( rotminv*v );
+		}
+		ptriseg3d.segmarkerlist = segmarkerlist;
+		mDebugPlanarTriSeg3d.push_back(ptriseg3d);
+		
+		if ( ssidx==2 ) {
+			return;
+		}
+#endif
+		//FilterAdjacentVerts2d(verts2d, segmarkerlist);
+		printf("++Begin Tesselate Triangle %d:\n",ssidx);
+		xtTrianglePLSG splittriutil(verts2d, segmarkerlist, outtris);
+		printf("--Finis Tesselate Triangle %d:\n",ssidx);
+		for ( size_t i=0; i<outtris.size(); ++i ) {
+			xtIndexTria3 tria;
+			for ( int fidx=0; fidx<3; ++fidx ) {
+				tria.a[fidx] = outtris[i].idx[fidx];
+			}
+			ss->tris.push_back(tria);
+		}
+		xtPlanarTri planartris;
+		planartris.tris = ss->tris;
+		planartris.verts = ptriseg3d.verts;
+		mDebugPlanarTris.push_back(planartris);
+
+
+	}
 }
 
 bool counteriftrue( bool & istrue )

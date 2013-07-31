@@ -101,6 +101,10 @@ struct xtVertexWBO
 	xtVertexWBOType type;
 	xtVector3d *v;
 	int idx;
+
+	bool operator==(const xtVertexWBO &v) {
+		return type==v.type&&this->v==v.v&&idx==v.idx;
+	}
 };
 
 struct xtSegmentWBO
@@ -131,6 +135,8 @@ struct xtSurfaceSlot
 	// pre 3 is the tirangle idx should be reference to the surface data
 	// for 3- is the local segment data should reference the the pointsOnSurfVerbos
 };
+
+static void OrderxtSegmentWBOList( std::vector<xtSegmentWBO *> &segwbo );
 
 struct xtSegmentVertexPointerKey
 {
@@ -327,7 +333,7 @@ private:
 	void SplitPnt(xtCollisionEntity *psI, xtCollisionEntity *psJ, xtSFMap &sfmap, xtGeometrySurfaceDataS *surfI, xtGeometrySurfaceDataS *surfJ);
 	void TessellateCollidedFace(xtCollisionEntity *ps, xtGeometrySurfaceDataS *surf );
 	void TessellateCollidedFaceRobust( xtCollisionEntity *ps, xtCollisionEngine *ce, const int type);
-	
+	void TessellateFaceWithWBO( xtCollisionEntity *ps, xtGeometrySurfaceDataS *surf0, xtGeometrySurfaceDataS *surf1 );
 
 	void InitializeCollisionEntity();
 	void DestroyMem();
