@@ -49,6 +49,7 @@
 #include "xtTriTriCollideScene.h"
 #include "xtLog.h"
 
+#include "xtTestSTLFunction.h"
 
 
 osg::Node *createScene()
@@ -548,6 +549,11 @@ static inline int TestTriTriIntersection()
 	return tritris.RunRender();
 }
 
+static inline void TestFunctionForeach()
+{
+	TestFunction(IntSquare);
+}
+
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -559,9 +565,10 @@ int _tmain(int argc, _TCHAR* argv[])
 	//return TestWRLParserTextureDisplay();
 	//return TestGTSParser();
 	//return TestGTSCollision();
-	TestGTSCollisionMoreCompact();
+	//TestGTSCollisionMoreCompact();
 	//return TestTriTriIntersection();
 	//return TestGTSCollisionMoreCompactLittleModel();
+	TestFunctionForeach();
 
 	Close_Log();
 	return 0;

@@ -119,6 +119,7 @@
     <ClInclude Include="xtRayTriOverlay.h" />
     <ClInclude Include="xtSectionOctree.h" />
     <ClInclude Include="xtSplitBuilder.h" />
+    <ClInclude Include="xtTestSTLFunction.h" />
     <ClInclude Include="xtTinyIMPL.h" />
     <ClInclude Include="xtTriangleBox3Overlap.h" />
     <ClInclude Include="xtTriTriCollideScene.h" />
@@ -162,6 +163,7 @@
     <ClCompile Include="xtRayTriOverlay.cpp" />
     <ClCompile Include="xtSectionOctree.cpp" />
     <ClCompile Include="xtSplitBuilder.cpp" />
+    <ClCompile Include="xtTestSTLFunction.cpp" />
     <ClCompile Include="xtTinyIMPL.cpp" />
     <ClCompile Include="xtTriangleBox3Overlap.cpp" />
     <ClCompile Include="xtTriTriCollideScene.cpp" />

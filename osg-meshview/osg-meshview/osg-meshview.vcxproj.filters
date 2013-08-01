@@ -171,6 +171,9 @@
     <ClInclude Include="trianglev2\triangleprimitive.h">
       <Filter>triangle</Filter>
     </ClInclude>
+    <ClInclude Include="xtTestSTLFunction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -286,6 +289,9 @@
     </ClCompile>
     <ClCompile Include="trianglev2\xtTrianglePLSG.cpp">
       <Filter>triangle</Filter>
+    </ClCompile>
+    <ClCompile Include="xtTestSTLFunction.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
