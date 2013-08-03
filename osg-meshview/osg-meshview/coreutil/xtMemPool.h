@@ -46,6 +46,7 @@ private:
 	xtBlock *m_FreeList;
 private:
 	void AddChunk();
+	void AddChunk1();
 };
 
 template<typename T>
@@ -123,11 +124,33 @@ void xtMemPool<T>::AddChunk()
 	it->next = NULL;
 }
 
+
+/**
+* This version insert the element to the front avoid the next NULL 
+* linear search!
+*/
+template<typename T>
+void xtMemPool<T>::AddChunk1()
+{
+	xtChunk *chunk = ( xtChunk* ) ( new xtByte[sizeof(xtChunk)] );
+	chunk->next = m_ChunkList;
+	chunk->nBlocks = m_ChunkList->nBlocks*2;
+	chunk->blocks = ( xtBlock* ) ( new xtByte[sizeof(xtBlock)*chunk->nBlocks] );
+	m_ChunkList = chunk;
+	
+	m_FreeList = chunk->blocks;
+	xtBlock *it=chunk->blocks;
+	for ( ; it!=chunk->blocks+chunk->nBlocks-1; ++it ) {
+		it->next = it+1;
+	}
+	it->next = NULL;
+}
+
 template<typename T>
 T *xtMemPool<T>::Alloc()
 {
 	if ( !m_FreeList ) {
-		AddChunk();
+		AddChunk1();
 	}
 
 	T *ret = (T*)m_FreeList;
@@ -149,5 +172,15 @@ template<typename T>
 void xtMemPool<T>::Clear()
 {
 	m_FreeList = m_ChunkList->blocks;
-
+	xtChunk *chunk = m_ChunkList;
+	xtBlock *block = NULL;
+	while ( chunk->next!=NULL ) {
+		block = chunk->blocks;
+		for ( ;block!=chunk->blocks+chunk->nBlocks-1; ++block ) {
+			block->next = block+1;
+		}
+		chunk = chunk->next;
+		block->next = chunk->blocks;
+	}
+	block->next = NULL;
 }

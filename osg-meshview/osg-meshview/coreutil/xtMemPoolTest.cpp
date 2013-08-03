@@ -31,10 +31,27 @@ void TestMemPool()
 	const int nallocated = 1000;
 	std::vector<xtTestClass *> ptrpool;
 	ptrpool.reserve(nallocated);
+	xtTestClass *curr = NULL;
+
 	for ( int i=0; i<nallocated; i++ ) {
-		ptrpool.push_back( tcMPool.Alloc() );
+		curr = tcMPool.Alloc();
+		curr->a[0]=0;
+		curr->a[1]=0;
+		curr->a[2]=i;
+		ptrpool.push_back( curr );
 	}
 	for ( int i=0; i<nallocated; ++i ) {
 		tcMPool.Free( ptrpool[i] );
 	} 
+
+	tcMPool.Clear();
+
+	for ( int i=0; i<nallocated; i++ ) {
+		curr = tcMPool.Alloc();
+		curr->a[0]=0;
+		curr->a[1]=0;
+		curr->a[2]=i;
+		ptrpool.push_back( curr );
+	}
+
 }
