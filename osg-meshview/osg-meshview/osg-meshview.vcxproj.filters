@@ -19,6 +19,9 @@
     <Filter Include="triangle">
       <UniqueIdentifier>{59ede959-87b5-4292-ae24-5ab0f9b8f5ba}</UniqueIdentifier>
     </Filter>
+    <Filter Include="coreutil">
+      <UniqueIdentifier>{cb784765-d113-4753-8b1a-f1fdd0c40378}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -174,6 +177,24 @@
     <ClInclude Include="xtTestSTLFunction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="xtOpenmeshHeader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\xtMemPool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="coreutil\xtMemPool.h">
+      <Filter>coreutil</Filter>
+    </ClInclude>
+    <ClInclude Include="coreutil\xtMemPoolTest.h">
+      <Filter>coreutil</Filter>
+    </ClInclude>
+    <ClInclude Include="coreutil\xtIterPool.h">
+      <Filter>coreutil</Filter>
+    </ClInclude>
+    <ClInclude Include="coreutil\xtMemCachedList.h">
+      <Filter>coreutil</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -292,6 +313,21 @@
     </ClCompile>
     <ClCompile Include="xtTestSTLFunction.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="xtOpenmeshHeader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="coreutil\xtMemPool.cpp">
+      <Filter>coreutil</Filter>
+    </ClCompile>
+    <ClCompile Include="coreutil\xtMemPoolTest.cpp">
+      <Filter>coreutil</Filter>
+    </ClCompile>
+    <ClCompile Include="coreutil\xtIterPool.cpp">
+      <Filter>coreutil</Filter>
+    </ClCompile>
+    <ClCompile Include="coreutil\xtMemCachedList.cpp">
+      <Filter>coreutil</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

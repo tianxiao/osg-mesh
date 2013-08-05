@@ -167,6 +167,7 @@ void xtSplitBuilder::Split()
 	} else if ( 2==methodid ) {
 		ConstructSplitSegmentsWithEndPoint();
 		TessellateFaceWithWBO(mPSI, mCE->mSurfI, mCE->mSurfJ);
+		TessellateFaceWithWBO(mPSJ, mCE->mSurfJ, mCE->mSurfI);
 	};
 	
 }
@@ -223,6 +224,81 @@ void xtSplitBuilder::SplitPnt(xtCollisionEntity *psI, xtCollisionEntity *psJ, xt
 							sfmap[key]=newsplitPnt;
 							//printf("Point On Parameters %f\t%f\t%f\t\n",t,u,v);
 							g_log_file << "--"<< eidx << "\t" << t << '\t' << u << '\t' << v << '\n';
+#if XT_DEBUG_PERCE_POINT
+							xtRaySegment rayseg = {startPntJ,*newsplitPnt,endPntJ};
+							mDebugedge.push_back(rayseg);
+#endif
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+void xtSplitBuilder::ConstructSplitVerts(xtCollisionEntity *psI, xtCollisionEntity *psJ, 
+	xtSFVMap &sfvmap, xtGeometrySurfaceDataS *surfI, xtGeometrySurfaceDataS *surfJ)
+{
+	for ( size_t i=0; i<psI->surfslot.size(); ++i ) {
+		xtSurfaceSlot *currssI = psI->surfslot[i];
+		for ( size_t fidx=0; fidx<currssI->cflist.size(); ++fidx ) {
+			const int collidessIdx = currssI->cflist[fidx];
+			xtSurfaceSlot *collidess = psJ->GetFaceSlotExit(collidessIdx);
+			for ( int eidx=0; eidx<3; ++eidx ) {
+				xtSegmentSlot *colledseg = collidess->segs[eidx];
+				const int startPntIdx = colledseg->startIdx;
+				const int endPntIdx = colledseg->endIdx;
+				// check start end collidessIdx as a key;
+				xtSegmentFaceK key = { startPntIdx, endPntIdx, currssI->idx };
+				xtSegmentFaceK keyinv = { endPntIdx, startPntIdx, currssI->idx };
+				xtSFVMap::iterator findkey = sfvmap.find(key);
+				if ( findkey!=sfvmap.end() ) {
+					xtSplitVertex *splitvert = findkey->second;
+					currssI->vertsOnSurf.push_back( splitvert );
+					colledseg->vertsOnSeg.push_back( splitvert );
+				} else if ( (findkey=sfvmap.find(keyinv))!=sfvmap.end() ) {
+					xtSplitVertex *splitvert = findkey->second;
+					currssI->vertsOnSurf.push_back( splitvert );
+					colledseg->vertsOnSeg.push_back( splitvert );
+				} else { // calculate the new point and insert it to the sfmap
+					xtVector3d startPntJ = GetWorldCoordinate(surfJ,startPntIdx);// surfJ->verts[startPntIdx];
+					xtVector3d endPntJ   = GetWorldCoordinate(surfJ,endPntIdx); //surfJ->verts[endPntIdx];
+					
+					xtIndexTria3 &triaI = surfI->indices[currssI->idx];
+					xtVector3d pa = GetWorldCoordinate(surfI,triaI.a[0]);//surfI->verts[triaI.a[0]];
+					xtVector3d pb = GetWorldCoordinate(surfI,triaI.a[1]);//surfI->verts[triaI.a[1]];
+					xtVector3d pc = GetWorldCoordinate(surfI,triaI.a[2]);//surfI->verts[triaI.a[2]];
+					
+					double t,u,v;
+					xtVector3d dir = (endPntJ-startPntJ);
+					const double dirlength = dir.norm();
+					if ( dirlength < 0.00001 ) {
+						printf("May De:%f\n",dirlength);
+					}
+					dir/=dirlength;
+					//dir.normalize();
+					//printf("Ray Direction x:%f,\ty:%f\tz:%f\n",dir.x(),dir.y(),dir.z());
+					g_log_file << "++"<< eidx << "\t" <<  dir.x() << "\t" <<dir.y() << "\t" << dir.z() << '\n' ; 
+
+					const double lab = (pb-pa).norm();
+					const double lbc = (pc-pb).norm();
+					const double lca = (pa-pc).norm();
+					double ts = lab<lbc?lab:lbc;
+					ts = ts<lca?ts:lca;
+					const double scale = 100;
+					const double elementTolerance = ts/scale;
+
+					// perturbation theory 
+
+					if ( IntersectTriangleTemplate(startPntJ, dir,pa,pb,pc,&t,&u,&v) ) {
+						if ( dirlength>=t && t>=0) {
+							//xtVector3d *newsplitPnt = new xtVector3d(startPntJ+t*dir);
+							//mSharedSplitPoints.push_back(newsplitPnt);
+							//currssI->pointsOnSurf.push_back(newsplitPnt);
+							//colledseg->pointOnSeg.push_back(newsplitPnt);
+							//sfmap[key]=newsplitPnt;
+							//printf("Point On Parameters %f\t%f\t%f\t\n",t,u,v);
+							//g_log_file << "--"<< eidx << "\t" << t << '\t' << u << '\t' << v << '\n';
 #if XT_DEBUG_PERCE_POINT
 							xtRaySegment rayseg = {startPntJ,*newsplitPnt,endPntJ};
 							mDebugedge.push_back(rayseg);
@@ -908,7 +984,7 @@ void xtSplitBuilder::TessellateFaceWithWBO( xtCollisionEntity *ps, xtGeometrySur
 		segmarker.marker = 0;
 		segmarkerlist.push_back(segmarker);
 		segmarker.seg[0] = 0+3;
-		segmarker.seg[1] = batedge0+1;
+		segmarker.seg[1] = (batedge0+1)%3;
 		segmarker.marker = 0;
 		segmarkerlist.push_back(segmarker);
 		const int batedge1idx = ss->segwbo.size()-1;
@@ -918,7 +994,7 @@ void xtSplitBuilder::TessellateFaceWithWBO( xtCollisionEntity *ps, xtGeometrySur
 		segmarker.marker = 0;
 		segmarkerlist.push_back(segmarker);
 		segmarker.seg[0] = batedge1idx+3+1;
-		segmarker.seg[1] = batedge1+1;
+		segmarker.seg[1] = (batedge1+1)%3;
 		segmarker.marker = 0;
 		segmarkerlist.push_back(segmarker);
 		const int wedgeidx = (0+1+2)-(batedge0+batedge1);
@@ -949,14 +1025,14 @@ void xtSplitBuilder::TessellateFaceWithWBO( xtCollisionEntity *ps, xtGeometrySur
 		ptriseg3d.segmarkerlist = segmarkerlist;
 		mDebugPlanarTriSeg3d.push_back(ptriseg3d);
 		
-		if ( ssidx==2 ) {
-			return;
+		if ( ssidx==40 ) {
+			//return;
 		}
 #endif
 		//FilterAdjacentVerts2d(verts2d, segmarkerlist);
 		printf("++Begin Tesselate Triangle %d:\n",ssidx);
 		xtTrianglePLSG splittriutil(verts2d, segmarkerlist, outtris);
-		printf("--Finis Tesselate Triangle %d:\n",ssidx);
+		printf("--Finish Tesselate Triangle %d:\n",ssidx);
 		for ( size_t i=0; i<outtris.size(); ++i ) {
 			xtIndexTria3 tria;
 			for ( int fidx=0; fidx<3; ++fidx ) {

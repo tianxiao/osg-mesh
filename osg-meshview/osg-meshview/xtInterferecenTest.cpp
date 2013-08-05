@@ -62,7 +62,7 @@ void xtInterferecenTest::SetUpScene()
 		//sceneRoot->addChild( xtOctreeDisplayUtility::RenderSplitSegmentsWithCyliner(mSB,xtColor(0.0,1.0,1.0,1.0),0.001f) );
 		sceneRoot->addChild( xtOctreeDisplayUtility::RednerSplitPntsAsSphere(mSB,xtColor(1.0,0.0,0.0,1.0),0.002f) );
 #if XT_DEBUG_PLANAR_TRI_SET
-		sceneRoot->addChild( xtOctreeDisplayUtility::RenderPlanarTriSplitSegs(mSB) );
+		//sceneRoot->addChild( xtOctreeDisplayUtility::RenderPlanarTriSplitSegs(mSB) );
 #endif
 #if XT_DEBUG_PERCE_POINT
 		sceneRoot->addChild( xtOctreeDisplayUtility::RenderRaySegment(mSB) );

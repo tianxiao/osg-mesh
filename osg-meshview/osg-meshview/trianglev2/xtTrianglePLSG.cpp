@@ -74,7 +74,7 @@ xtTrianglePLSG::xtTrianglePLSG(
 		}
 		tris.push_back(tri);
 	}
-
+	report(mIn,0, 1, 0, 1, 0, 0);
 	report(mOut,1, 1, 0, 0, 0, 0);
 }
 

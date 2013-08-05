@@ -27,7 +27,14 @@ inline void TestFunction( std::function<void (int &)> func )
 	for ( int i=0; i<numint; ++i ) {
 		intlist.push_back(i);
 	}
+
 	std::for_each(intlist.begin(), intlist.end(), PrintElement);
 	std::for_each(intlist.begin(), intlist.end(), func);
 	std::for_each(intlist.begin(), intlist.end(), PrintElement);
+	std::for_each(intlist.begin(), intlist.end(), [&](int &i) {
+		printf("++%d\t++\n",i);
+		i=i*i;
+	});
+	std::for_each(intlist.begin(), intlist.end(), PrintElement);
+
 }

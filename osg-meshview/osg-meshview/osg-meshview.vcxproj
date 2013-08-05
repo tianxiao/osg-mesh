@@ -48,14 +48,14 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../osg/include;../eigen-2249f9c22fe8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_USE_MATH_DEFINES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../osg/include;../eigen-2249f9c22fe8;../OpenMesh-2.3.1\OpenMesh-2.3.1\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;OpenThreadsd.lib;osgd.lib;osgDBd.lib;osgUtild.lib;osgGAd.lib;osgViewerd.lib;osgTextd.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>../../osg/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;OpenThreadsd.lib;osgd.lib;osgDBd.lib;osgUtild.lib;osgGAd.lib;osgViewerd.lib;osgTextd.lib;opengl32.lib;OpenMeshCored.lib;OpenMeshToolsd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../../osg/lib;../OpenMesh-2.3.1/OpenMesh-2.3.1/msbuild/Build/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -81,6 +81,11 @@
     <ClInclude Include="..\buildpyramidGeometry\osgcommon.h" />
     <ClInclude Include="..\buildpyramidGeometry\xtCreateHUD.h" />
     <ClInclude Include="..\buildpyramidGeometry\xtPickHandler.h" />
+    <ClInclude Include="coreutil\xtIterPool.h" />
+    <ClInclude Include="coreutil\xtMemCachedList.h" />
+    <ClInclude Include="coreutil\xtMemPool.h" />
+    <ClInclude Include="coreutil\xtMemPoolTest.h" />
+    <ClInclude Include="core\xtMemPool.h" />
     <ClInclude Include="linearmathcom.h" />
     <ClInclude Include="mxtOctreeScene.h" />
     <ClInclude Include="Octree.h" />
@@ -114,6 +119,7 @@
     <ClInclude Include="xtOctreeDisplayUtil.h" />
     <ClInclude Include="xtOctreeNode.h" />
     <ClInclude Include="xtOctreeScene.h" />
+    <ClInclude Include="xtOpenmeshHeader.h" />
     <ClInclude Include="xtPrimitive.h" />
     <ClInclude Include="xtPrimitiveTestUtil.h" />
     <ClInclude Include="xtRayTriOverlay.h" />
@@ -132,6 +138,10 @@
   <ItemGroup>
     <ClCompile Include="..\buildpyramidGeometry\xtCreateHUD.cpp" />
     <ClCompile Include="..\buildpyramidGeometry\xtPickHandler.cpp" />
+    <ClCompile Include="coreutil\xtIterPool.cpp" />
+    <ClCompile Include="coreutil\xtMemCachedList.cpp" />
+    <ClCompile Include="coreutil\xtMemPool.cpp" />
+    <ClCompile Include="coreutil\xtMemPoolTest.cpp" />
     <ClCompile Include="mxtOctreeScene.cpp" />
     <ClCompile Include="osg-meshview.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -158,6 +168,7 @@
     <ClCompile Include="xtOctreeDisplayUtil.cpp" />
     <ClCompile Include="xtOctreeNode.cpp" />
     <ClCompile Include="xtOctreeScene.cpp" />
+    <ClCompile Include="xtOpenmeshHeader.cpp" />
     <ClCompile Include="xtPrimitive.cpp" />
     <ClCompile Include="xtPrimitiveTestUtil.cpp" />
     <ClCompile Include="xtRayTriOverlay.cpp" />

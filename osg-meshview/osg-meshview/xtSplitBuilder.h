@@ -55,12 +55,15 @@ struct xtSegFaceComp
 	}
 };
 
+struct xtSplitVertex;
 struct xtSegmentSlot
 {
 	int startIdx, endIdx;
 
 	//====================================
 	std::vector<xtVector3d *> pointOnSeg;
+	// like the xtSurfaceSlot change the geometry point to the topology point
+	std::vector<xtSplitVertex *> vertsOnSeg;
 };
 
 struct xtSegment
@@ -121,6 +124,8 @@ struct xtSurfaceSlot
 
 	//====================================
 	std::vector<xtVector3d *> pointsOnSurf;
+	// modified pointsOnSurf
+	std::vector<xtSplitVertex *> vertsOnSurf;
 	std::vector<xtVector3d *> pointsOnSurfVerbos;  // same as pointsOnSurf in case miss
 	std::vector<xtSegment *> segsonsurf;
 	//====================================
@@ -304,6 +309,27 @@ struct xtPlanarTri
 	std::vector<xtVector3d> verts;
 };
 
+struct xtSplitVertex
+{
+	// actually the point and the following three can be combined to a union
+	// or use the vritual funciton to bind
+	xtVector3d point;
+	bool IsDegenerate;
+	int idx;
+	xtSurfaceCat ftype;
+};
+
+// describe a degenerate case
+struct xtDegeneratePoint
+{
+	int idx;          // 0 or 1
+	int edge[2];
+	int ofaceId;
+	double t;
+	xtVector3d dir;
+};
+
+
 class xtCollisionEngine;
 class xtSplitBuilder
 {
@@ -317,7 +343,9 @@ class xtSplitBuilder
 	friend osg::Group * xtOctreeDisplayUtility::RenderPlanarTris(xtSplitBuilder *sb);
 	friend osg::Geode * xtOctreeDisplayUtility::RenderSplitSegmentsWBODebug(xtSplitBuilder *splitBuilder, xtColor color, float linewidth/*=4.0*/);
 	typedef std::map<xtSegmentFaceK, xtVector3d *, xtSegFaceComp> xtSFMap;
+	typedef std::map<xtSegmentFaceK, xtSplitVertex *, xtSegFaceComp> xtSFVMap;
 	typedef std::map<xtFaceFaceKey, xtSegment *, xtFaceFaceKeyComp> xtFFMap;
+	typedef std::map<int, xtDegeneratePoint* > xtDePointMap;
 public:
 	xtSplitBuilder(void);
 	~xtSplitBuilder(void);
@@ -331,6 +359,7 @@ private:
 	void ConstructSplitSegmentsRobust();
 	void ConstructSplitSegmentsWithEndPoint();
 	void SplitPnt(xtCollisionEntity *psI, xtCollisionEntity *psJ, xtSFMap &sfmap, xtGeometrySurfaceDataS *surfI, xtGeometrySurfaceDataS *surfJ);
+	void ConstructSplitVerts(xtCollisionEntity *psI, xtCollisionEntity *psJ, xtSFVMap &sfvmap, xtGeometrySurfaceDataS *surfI, xtGeometrySurfaceDataS *surfJ);
 	void TessellateCollidedFace(xtCollisionEntity *ps, xtGeometrySurfaceDataS *surf );
 	void TessellateCollidedFaceRobust( xtCollisionEntity *ps, xtCollisionEngine *ce, const int type);
 	void TessellateFaceWithWBO( xtCollisionEntity *ps, xtGeometrySurfaceDataS *surf0, xtGeometrySurfaceDataS *surf1 );
@@ -357,6 +386,21 @@ private:
 	// So Need a inverse tran
 	std::vector<xtVector3d *> mSharedSplitPoints;
 	std::vector<xtSegment *>  mSharedSplitSegList;
+
+	// Add new shared split points add the degenerate case in it 
+	// like the intersection point is sit on the surface or ? to close to the 
+	// element surface;
+	std::vector<xtSplitVertex *> mSharedSplitVerts;
+	xtSFVMap mSFMVI;
+	xtSFVMap mSFMVJ;
+
+
+	// Add degenerate case
+	//xtDePointMap mDPI;
+	//xtDePointMap mDPJ;
+	//std::vector<xtDegeneratePoint *> mDegenerateI;
+	//std::vector<xtDegeneratePoint *> mDegenerateJ;
+
 
 	xtCollisionEntity *mPSI; // PS mean partial collision surface
 	xtCollisionEntity *mPSJ;

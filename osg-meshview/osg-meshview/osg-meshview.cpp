@@ -51,6 +51,9 @@
 
 #include "xtTestSTLFunction.h"
 
+// test mem pool
+#include "./coreutil/xtMemPoolTest.h"
+
 
 osg::Node *createScene()
 {
@@ -565,10 +568,11 @@ int _tmain(int argc, _TCHAR* argv[])
 	//return TestWRLParserTextureDisplay();
 	//return TestGTSParser();
 	//return TestGTSCollision();
-	//TestGTSCollisionMoreCompact();
+	TestGTSCollisionMoreCompact();
 	//return TestTriTriIntersection();
 	//return TestGTSCollisionMoreCompactLittleModel();
-	TestFunctionForeach();
+	//TestFunctionForeach();
+	//TestMemPool();
 
 	Close_Log();
 	return 0;
