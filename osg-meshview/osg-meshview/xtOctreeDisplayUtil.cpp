@@ -241,10 +241,10 @@ osg::Node *xtOctreeDisplayUtility::RenderCollided(xtGeometrySurfaceDataS *surfac
 		state2->setMode( GL_LIGHTING, osg::StateAttribute::OFF );
 		transparent->setStateSet(state2);
 	}
-	cpnode->addChild(transparent);
-	cpnode->addChild(RenderCollideList(surfaceJ,cpJ,xtColor(0.5,0.0,0.5,1.),false));
+	//cpnode->addChild(transparent);
+	//cpnode->addChild(RenderCollideList(surfaceJ,cpJ,xtColor(0.5,0.0,0.5,1.),false));
 	cpnode->addChild(RenderCollideList(surfaceI,cpI,xtColor(0.0,0.0,0.0,1.)));
-	cpnode->addChild(RenderCollideList(surfaceJ,cpJ,xtColor(0.0,0.0,0.0,1.)));
+	//cpnode->addChild(RenderCollideList(surfaceJ,cpJ,xtColor(0.0,0.0,0.0,1.)));
 	
 	
 	cpnode->setName("Collision Pair");

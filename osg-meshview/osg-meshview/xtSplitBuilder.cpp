@@ -167,7 +167,7 @@ void xtSplitBuilder::Split()
 	} else if ( 2==methodid ) {
 		ConstructSplitSegmentsWithEndPoint();
 		TessellateFaceWithWBO(mPSI, mCE->mSurfI, mCE->mSurfJ);
-		TessellateFaceWithWBO(mPSJ, mCE->mSurfJ, mCE->mSurfI);
+		//TessellateFaceWithWBO(mPSJ, mCE->mSurfJ, mCE->mSurfI);
 	};
 	
 }
@@ -1025,7 +1025,7 @@ void xtSplitBuilder::TessellateFaceWithWBO( xtCollisionEntity *ps, xtGeometrySur
 		ptriseg3d.segmarkerlist = segmarkerlist;
 		mDebugPlanarTriSeg3d.push_back(ptriseg3d);
 		
-		if ( ssidx==40 ) {
+		if ( ssidx==7 ) {
 			//return;
 		}
 #endif
@@ -1349,6 +1349,7 @@ void xtSplitBuilder::ConstructSplitSegmentsWithEndPoint()
 			mFFM[ffkey] = newseg;
 
 
+			// 2==numIntersectWJ means there two edges from face I intersect with face J
 			//======================================================
 			xtSegmentWBO *nsegwboi = new xtSegmentWBO;
 			nsegwboi->v[0].type = ON_SURFACE;
@@ -1365,7 +1366,7 @@ void xtSplitBuilder::ConstructSplitSegmentsWithEndPoint()
 			nsegwboj->v[0].idx = (falseIdxJ+1)%3;
 			nsegwboj->v[1].type = ON_BOUNDARY;
 			nsegwboj->v[1].v = spJlist[(falseIdxJ+2)%3];
-			nsegwboj->v[1].idx = (falseIdxJ+1)%3;
+			nsegwboj->v[1].idx = (falseIdxJ+2)%3;
 			mPSI->AddSegWBOToFace(fIidx, nsegwboj);
 
 		} else if ( 1==numIntersectWI&&1==numIntersectWJ ) {
@@ -1482,6 +1483,9 @@ void xtSplitBuilder::ConstructSplitSegmentsWithEndPoint()
 			nsegwboj->v[1].v = spJlist[trueJidx];
 			nsegwboj->v[1].idx = -1;
 			mPSI->AddSegWBOToFace(fIidx, nsegwboj);
+			
+			//debug
+			printf("I2J1\n");
 
 		} else if ( 1==numIntersectWI&&2==numIntersectWJ) {
 			//printf( "J touch on\n" );
@@ -1521,6 +1525,8 @@ void xtSplitBuilder::ConstructSplitSegmentsWithEndPoint()
 			nsegwboj->v[1].v = NULL;
 			nsegwboj->v[1].idx = (falseJidx+2)%3;
 			mPSI->AddSegWBOToFace(fIidx, nsegwboj);
+			
+			printf("I1J2\n");
 
 		} else if ( 3==numIntersectWI ) {
 			// impossible if they are not lay int the same plane
