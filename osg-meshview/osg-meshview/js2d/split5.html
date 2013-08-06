@@ -1,0 +1,94 @@
+<html>
+<head></head>
+</body>
+<canvas id="myCanvas" width="1000" height="1000"></canvas>
+
+<script>
+	var c=document.getElementById("myCanvas");
+	var ctx=c.getContext("2d");
+	var xscreen = c.width;
+	var yscreen = c.height;
+	ctx.fillStyle="#FF0000";
+	ctx.fillRect(0,0,20,20);
+	// 8 points
+	var numpoints = 5;
+	pointlist = [
+	
+0.293077,  -0.700621,
+0.080675,  -0.577816,
+0.293077,  -0.455535,
+0.293077,  -0.676075,
+0.266581,  -0.685302,
+
+	];
+
+	// 
+	var xmax=-9007199254740992;
+	var xmin=-xmax;
+	var ymax=xmax;
+	var ymin=xmin;
+	for ( var i=0; i<numpoints; ++i ) {
+		xmax=xmax>pointlist[i*2]?xmax:pointlist[i*2];
+		xmin=xmin<pointlist[i*2]?xmin:pointlist[i*2];
+		ymax=ymax>pointlist[i*2+1]?ymax:pointlist[i*2+1];
+		ymin=ymin<pointlist[i*2+1]?ymin:pointlist[i*2+1];
+	}
+
+	var scalefactor = 0.6;
+	var xscale = xscreen/(xmax-xmin)*scalefactor;
+	var yscale = yscreen/(ymax-ymin)*scalefactor;
+	var xcenter = (xmax+xmin)/2.0;
+	var ycenter = (ymax+ymin)/2.0;
+	for ( var i=0; i<numpoints; ++i ) {
+		pointlist[i*2]   = (pointlist[i*2]-xcenter)*xscale   +xscreen/2.0;
+		pointlist[i*2+1] = (pointlist[i*2+1]-ycenter)*yscale +yscreen/2.0;
+	}
+	
+	
+	// 9 triangles
+	var numtris = 2;
+	tri = [
+3,     2,     4,
+3,     4,     0,
+	];
+	
+	// draw points as circle
+	for ( var pidx=0; pidx<numpoints; ++pidx ) {
+		pnt = {x:pointlist[2*pidx],y:pointlist[2*pidx+1]};
+		ctx.beginPath();
+		ctx.arc(pnt.x,pnt.y,5,0,2*Math.PI);
+		ctx.strokeStyle="#00FFFF"
+		ctx.fillStyle="#000000"
+		ctx.stroke();	
+		ctx.font = "10px Arial";
+		ctx.fillText(pidx,pnt.x,pnt.y);
+	}
+	
+	for ( var triidx=0; triidx<numtris; ++triidx ) {
+		p0 = {x:pointlist[2*tri[3*triidx]], y:pointlist[2*tri[3*triidx]+1]};
+		p1 = {x:pointlist[2*tri[3*triidx+1]], y:pointlist[2*tri[3*triidx+1]+1]};
+		p2 = {x:pointlist[2*tri[3*triidx+2]], y:pointlist[2*tri[3*triidx+2]+1]};
+		ctx.lineWidth = 0.5;
+		//ctx.strokeStyle="#FF0000"
+		ctx.beginPath();
+		ctx.moveTo(p0.x,p0.y );
+		ctx.lineTo(p1.x,p1.y );
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(p1.x,p1.y);
+		ctx.lineTo(p2.x,p2.y);
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(p2.x,p2.y);
+		ctx.lineTo(p0.x,p0.y);
+		ctx.stroke();
+		ctx.font = "10px Arial";
+		ctx.fillStyle="#FF0000"
+		pcenter = {x:(p0.x+p1.x+p2.x)/3.0,y:(p0.y+p1.y+p2.y)/3.0};
+		ctx.fillText(triidx,pcenter.x,pcenter.y);
+	}
+	
+</script>
+
+</body>
+</html>

@@ -1,0 +1,76 @@
+<html>
+<head></head>
+</body>
+<canvas id="myCanvas" width="1000" height="1000"></canvas>
+
+<script>
+	var c=document.getElementById("myCanvas");
+	var ctx=c.getContext("2d");
+	ctx.fillStyle="#FF0000";
+	ctx.fillRect(0,0,20,20);
+	// 8 points
+	var numpoints = 8;
+	pointlist = [
+
+-0.360968,  -0.604405,
+-0.573143,  -0.481731,
+-0.360968,  -0.359058,
+-0.360968,  -0.5738 ,
+-0.50376 ,  -0.473742 ,
+-0.504168,  -0.473364,
+-0.504661,  -0.472698 ,
+-0.518366,  -0.450061  ,
+	];
+	// scale point coordinate
+	for ( var i=0; i<numpoints*2; ++i ) {
+		pointlist[i] = pointlist[i]*2000+1500; 
+	}
+	// 9 triangles
+	var numtris = 4;
+	tri = [
+4,     7,     6,
+6,     5,     4,
+4,     2,     7,
+2,     4,     3,
+	];
+	
+	// draw points as circle
+	for ( var pidx=0; pidx<numpoints; ++pidx ) {
+		pnt = {x:pointlist[2*pidx],y:pointlist[2*pidx+1]};
+		ctx.beginPath();
+		ctx.arc(pnt.x,pnt.y,5,0,2*Math.PI);
+		ctx.strokeStyle="#00FFFF"
+		ctx.fillStyle="#000000"
+		ctx.stroke();	
+		ctx.font = "10px Arial";
+		ctx.fillText(pidx,pnt.x,pnt.y);
+	}
+	
+	for ( var triidx=0; triidx<numtris; ++triidx ) {
+		p0 = {x:pointlist[2*tri[3*triidx]], y:pointlist[2*tri[3*triidx]+1]};
+		p1 = {x:pointlist[2*tri[3*triidx+1]], y:pointlist[2*tri[3*triidx+1]+1]};
+		p2 = {x:pointlist[2*tri[3*triidx+2]], y:pointlist[2*tri[3*triidx+2]+1]};
+		ctx.lineWidth = 0.5;
+		//ctx.strokeStyle="#FF0000"
+		ctx.beginPath();
+		ctx.moveTo(p0.x,p0.y );
+		ctx.lineTo(p1.x,p1.y );
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(p1.x,p1.y);
+		ctx.lineTo(p2.x,p2.y);
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(p2.x,p2.y);
+		ctx.lineTo(p0.x,p0.y);
+		ctx.stroke();
+		ctx.font = "10px Arial";
+		ctx.fillStyle="#FF0000"
+		pcenter = {x:(p0.x+p1.x+p2.x)/3.0,y:(p0.y+p1.y+p2.y)/3.0};
+		ctx.fillText(triidx,pcenter.x,pcenter.y);
+	}
+	
+</script>
+
+</body>
+</html>
