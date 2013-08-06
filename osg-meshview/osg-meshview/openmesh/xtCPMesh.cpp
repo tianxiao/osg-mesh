@@ -77,16 +77,30 @@ void xtCPMesh::BuildRawMesh()
 	xtBuildRawMesh(this->mSurf, *(this->mData) );
 }
 
+// how to set the globale constant collective
+OpenMesh::VPropHandleT<xtIntersectionPnt> vtype;
+OpenMesh::FPropHandleT<xtIntersectFace> ftype;
+
 void xtCPMesh::Remesh()
 {
+	
+	mData->mesh.add_property( vtype );
+	mData->mesh.add_property( ftype );
+
 	std::vector<txMyOPMesh::VHandle> vhandles;
 	for ( size_t i=0; i<mAbpool->mAbverts.size(); ++i ) {
 		xtAbosoluteVertex *v = mAbpool->mAbverts[i];
 		// first ignore the special case 
 		assert( v->type!=ON_SURFACE_I && v->type!=ON_SRUFACE_J ) ;
 		xtVector3d *p = v->splitpnt;
-		vhandles.push_back( mData->mesh.add_vertex( txMyOPMesh::Point( (float)p->x(), (float)p->y(), (float)p->z() ) ) );
+		txMyOPMesh::VHandle vhandle = mData->mesh.add_vertex( txMyOPMesh::Point( (float)p->x(), (float)p->y(), (float)p->z() ) ) ;
+		mData->mesh.property( vtype, vhandle ) = XT_BOUNDARY_PNT;
+		vhandles.push_back( vhandle );
 	}
+
+	assert(vhandles.size());
+	mNumIstPnts = vhandles.size();
+	mIstStartPntIdx = vhandles[0].idx();
 
 	std::vector<txMyOPMesh::VHandle> vhandle3; 
 	std::vector<txMyOPMesh::VHandle> vhandletem3(3);
@@ -117,14 +131,18 @@ void xtCPMesh::Remesh()
 				//xtAbosoluteVertex *abv = ss->aftertrinodeslist
 				int idx=tria.a[vidx];
 				if ( idx<3 ) {
+					// Originally I use the cache handle 
+					// vhandle3list--vhandle3 but the idx may mis alligned
 					vhandletem3[vidx]=mData->mesh.vertex_handle( mSurf->indices[ss->idx].a[idx] );
 				} else {
 					idx=idx-3;
 					vhandletem3[vidx]=vhandles[ss->aftertrinodeslist[idx]->vIdInPool];
 				}
 			}
+			// The ccw or cw may also be considered when feed into the OpenMesh API
 			std::swap( vhandletem3[1], vhandletem3[2] );
-			mData->mesh.add_face( vhandletem3 );
+			txMyOPMesh::FaceHandle fhandle = mData->mesh.add_face( vhandletem3 );
+			mData->mesh.property( ftype, fhandle ) = XT_INTERSECT_FACE;
 			printf( "Add face %d\t--%d \n" , ss->idx, triidx);
 			//vhandletem3.clear();
 		}
@@ -134,4 +152,38 @@ void xtCPMesh::Remesh()
 	mData->mesh.garbage_collection();
 
 	DumpMeshOff();
+}
+
+void xtCPMesh::TrackInterface()
+{
+	//mData->mesh.add_property( vtype );
+	//std::vector<txMyOPMesh::HalfedgeHandle> istHalfEdgeList;
+	txMyOPMesh::VertexHandle startvh = mData->mesh.vertex_handle( mIstStartPntIdx );
+	txMyOPMesh::VertexHandle cusurvh;
+	// Two criteria 
+	// 1st check if the totoal iterator num is the mNumIstPnts;
+	// 2nd check if the end pnt isn't start, or have no bit back 
+	// here I use 2nd 
+	int find=0;
+	while ( cusurvh!= startvh ) { // in case a circle
+		txMyOPMesh::VOHIter vbit = mData->mesh.voh_begin( startvh );
+		for ( ;vbit!=mData->mesh.voh_end( startvh ); ++vbit ) {
+			txMyOPMesh::VHandle circlvh = mData->mesh.opposite_vh( vbit ); 
+			if ( mData->mesh.property( vtype,circlvh )==XT_BOUNDARY_PNT ) {
+				cusurvh=circlvh;
+				//istHalfEdgeList.push_back( vbit.current_halfedge_handle() );
+				mIstHalfedgeIdxList.push_back( vbit.current_halfedge_handle().idx() );
+				find++;
+			}
+		}
+		if ( 0==find ) { // There is no direction
+			break;
+		}
+		find=0;
+	}
+}
+
+void xtCPMesh::TagFace()
+{
+	
 }
