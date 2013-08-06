@@ -90,6 +90,9 @@
     <ClInclude Include="mxtOctreeScene.h" />
     <ClInclude Include="Octree.h" />
     <ClInclude Include="OctreePoint.h" />
+    <ClInclude Include="openmesh\xtCPMesh.h" />
+    <ClInclude Include="openmesh\xtOpenmeshHeader.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="RTree.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Stopwatch.h" />
@@ -119,7 +122,6 @@
     <ClInclude Include="xtOctreeDisplayUtil.h" />
     <ClInclude Include="xtOctreeNode.h" />
     <ClInclude Include="xtOctreeScene.h" />
-    <ClInclude Include="xtOpenmeshHeader.h" />
     <ClInclude Include="xtPrimitive.h" />
     <ClInclude Include="xtPrimitiveTestUtil.h" />
     <ClInclude Include="xtRayTriOverlay.h" />
@@ -143,6 +145,8 @@
     <ClCompile Include="coreutil\xtMemPool.cpp" />
     <ClCompile Include="coreutil\xtMemPoolTest.cpp" />
     <ClCompile Include="mxtOctreeScene.cpp" />
+    <ClCompile Include="openmesh\xtCPMesh.cpp" />
+    <ClCompile Include="openmesh\xtOpenmeshHeader.cpp" />
     <ClCompile Include="osg-meshview.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -168,7 +172,6 @@
     <ClCompile Include="xtOctreeDisplayUtil.cpp" />
     <ClCompile Include="xtOctreeNode.cpp" />
     <ClCompile Include="xtOctreeScene.cpp" />
-    <ClCompile Include="xtOpenmeshHeader.cpp" />
     <ClCompile Include="xtPrimitive.cpp" />
     <ClCompile Include="xtPrimitiveTestUtil.cpp" />
     <ClCompile Include="xtRayTriOverlay.cpp" />
@@ -183,6 +186,9 @@
     <ClCompile Include="xtWRLData.cpp" />
     <ClCompile Include="xtWRLMParser.cpp" />
     <ClCompile Include="xtWRLScene.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="osg-meshview.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -31,7 +31,7 @@ struct xtGeometrySurfaceDataS
 static inline xtVector3d GetWorldCoordinate( xtGeometrySurfaceDataS *surf, const int idx ) 
 {
 	assert(idx>=0);
-	assert(idx<surf->verts.size());
+	assert(idx<(int)surf->verts.size());
 	xtVector3d temp =surf->verts[idx];
 	temp = surf->tran + surf->rot*temp;
 	return temp;

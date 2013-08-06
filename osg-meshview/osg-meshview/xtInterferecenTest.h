@@ -10,6 +10,7 @@ class xtGTSParser;
 struct xtGeometrySurfaceDataS;
 class xtCollisionEngine;
 class xtSplitBuilder;
+class xtCPMesh;
 class xtInterferecenTest
 {
 public:
@@ -22,11 +23,17 @@ public:
 	void SetUpScene();
 	int RunScene();
 
+private:
+	void LoadRawMesh();
+	void UpdateConnectivity();
 
 private:
 	xtGeometrySurfaceDataS *mSurfI;
 	xtGeometrySurfaceDataS *mSurfJ;
 	xtGTSParser *mGtsparserI, *mGtsparserJ;
+
+	xtCPMesh *mMeshI;
+	xtCPMesh *mMeshJ;
 
 	// Broad & mediate phase
 	xtCollisionEngine *mCE;

@@ -241,10 +241,10 @@ osg::Node *xtOctreeDisplayUtility::RenderCollided(xtGeometrySurfaceDataS *surfac
 		state2->setMode( GL_LIGHTING, osg::StateAttribute::OFF );
 		transparent->setStateSet(state2);
 	}
-	//cpnode->addChild(transparent);
-	//cpnode->addChild(RenderCollideList(surfaceJ,cpJ,xtColor(0.5,0.0,0.5,1.),false));
+	cpnode->addChild(transparent);
+	cpnode->addChild(RenderCollideList(surfaceJ,cpJ,xtColor(0.5,0.0,0.5,1.),false));
 	cpnode->addChild(RenderCollideList(surfaceI,cpI,xtColor(0.0,0.0,0.0,1.)));
-	//cpnode->addChild(RenderCollideList(surfaceJ,cpJ,xtColor(0.0,0.0,0.0,1.)));
+	cpnode->addChild(RenderCollideList(surfaceJ,cpJ,xtColor(0.0,0.0,0.0,1.)));
 	
 	
 	cpnode->setName("Collision Pair");
@@ -499,6 +499,8 @@ osg::Geode *xtOctreeDisplayUtility::RenderPlanarTriSplitSegs(xtSplitBuilder *sb)
 osg::Group *xtOctreeDisplayUtility::RenderPlanarTris(xtSplitBuilder *sb)
 {
 	osg::Group *group = new osg::Group;
+
+#if 0
 	for ( size_t i=0; i<sb->mDebugPlanarTris.size(); ++i ) {
 		xtPlanarTri &tri = sb->mDebugPlanarTris[i];
 		for ( size_t triidx=0; triidx<tri.tris.size(); ++triidx ) {
@@ -506,6 +508,30 @@ osg::Group *xtOctreeDisplayUtility::RenderPlanarTris(xtSplitBuilder *sb)
 			group->addChild( RenderArrow(tri.verts[tria.a[0]],tri.verts[tria.a[1]],0.001) );
 			group->addChild( RenderArrow(tri.verts[tria.a[1]],tri.verts[tria.a[2]],0.001) );
 			group->addChild( RenderArrow(tri.verts[tria.a[2]],tri.verts[tria.a[0]],0.001) );
+		}
+	}
+#endif
+	xtGeometrySurfaceDataS *surfI, *surfJ;
+	surfI = sb->mCE->AccessSurfI();
+	surfJ = sb->mCE->AccessSurfJ();
+	xtVector3d tripnts[3];
+	std::vector<xtSurfaceSlot *> &surfslot = sb->mPSI->AccessSurfaceSlotList();
+	for ( size_t i=0; i<surfslot.size(); ++i ) {
+		xtSurfaceSlot *ss = surfslot[i];
+		for ( size_t fidx=0; fidx<ss->tris.size(); ++fidx ) {
+			xtIndexTria3 &tria = ss->tris[fidx];
+			for ( int vidx=0; vidx<3; ++vidx ) {
+				int idx = tria.a[vidx];
+				if ( idx<3 ) {
+					tripnts[vidx] = GetWorldCoordinate(surfI, surfI->indices[ss->idx].a[idx]);
+				} else {
+					tripnts[vidx] = *( ss->aftertrinodeslist[idx-3]->splitpnt );
+				}
+			}
+			for ( int vidx=0; vidx<3; ++vidx ) {
+				group->addChild( RenderArrow(tripnts[vidx],tripnts[(vidx+1)%3],0.001) );
+			}
+
 		}
 	}
 

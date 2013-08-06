@@ -63,9 +63,11 @@ xtTrianglePLSG::xtTrianglePLSG(
 	mOut->segmentlist = (int*) NULL;
 	mOut->segmentmarkerlist = (int*) NULL;
 
-	std::string paras = "pz";
+	std::string paras = "pzQ";
 
 	triangulate(const_cast<char *>(paras.c_str()), mIn, mOut, (struct triangulateio*) NULL);
+
+	report(mOut,1, 1, 0, 0, 0, 0);
 
 	xtTriIndexO tri;
 	for ( int triidx=0; triidx<mOut->numberoftriangles; ++triidx ) {
@@ -74,8 +76,8 @@ xtTrianglePLSG::xtTrianglePLSG(
 		}
 		tris.push_back(tri);
 	}
-	report(mIn,0, 1, 0, 1, 0, 0);
-	report(mOut,1, 1, 0, 0, 0, 0);
+	//report(mIn,0, 1, 0, 1, 0, 0);
+	
 }
 
 

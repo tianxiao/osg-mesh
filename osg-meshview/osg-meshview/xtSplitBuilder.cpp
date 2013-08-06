@@ -95,7 +95,6 @@ void xtCollisionEntity::AddSegWBOToFace(const int fi, xtSegmentWBO *seg)
 	ss->segwbo.push_back(seg);
 }
 
-
 xtSurfaceSlot *xtCollisionEntity::GetFaceSlotExit(int fi)
 {
 	for ( size_t i=0; i<surfslot.size(); ++i ) {
@@ -167,10 +166,12 @@ void xtSplitBuilder::Split()
 	} else if ( 2==methodid ) {
 		ConstructSplitSegmentsWithEndPoint();
 		TessellateFaceWithWBO(mPSI, mCE->mSurfI, mCE->mSurfJ);
-		//TessellateFaceWithWBO(mPSJ, mCE->mSurfJ, mCE->mSurfI);
+		TessellateFaceWithWBO(mPSJ, mCE->mSurfJ, mCE->mSurfI);
 	};
 	
+	BuildMeshConnectivity();
 }
+
 
 void xtSplitBuilder::SplitPnt(xtCollisionEntity *psI, xtCollisionEntity *psJ, xtSFMap &sfmap, xtGeometrySurfaceDataS *surfI, xtGeometrySurfaceDataS *surfJ)
 {
@@ -817,7 +818,7 @@ void OrderxtSegmentWBOList( std::vector<xtSegmentWBO *> &segwbo )
 	int singlecount=0;
 	int singlep[2];
 	int signlepatseg[2];
-	for ( int segi=0; segi<segwbo.size(); ++segi ) {
+	for ( size_t segi=0; segi<segwbo.size(); ++segi ) {
 		xtSegmentWBO *seg = segwbo[segi];
 
 		xtState2 &state = segstatelist[segi];
@@ -828,7 +829,7 @@ void OrderxtSegmentWBOList( std::vector<xtSegmentWBO *> &segwbo )
 		//if ( state.s[0]>-2 ) continue;
 		//if ( state.s[1]>-2 ) continue;
 
-		for ( int sci=segi+1; sci<segwbo.size(); ++sci ) {
+		for ( size_t sci=segi+1; sci<segwbo.size(); ++sci ) {
 			for ( int endi=0; endi<2; ++endi ) {
 				for ( int scii=0; scii<2; ++scii ) {
 					if ( seg->v[endi]==segwbo[sci]->v[scii] ) {
@@ -882,11 +883,11 @@ void OrderxtSegmentWBOList( std::vector<xtSegmentWBO *> &segwbo )
 
 }
 
-xtTriPnt2 GetPlanarPoint()
-{
-	xtTriPnt2 t;
-	return t;
-}
+//xtTriPnt2 GetPlanarPoint()
+//{
+//	xtTriPnt2 t;
+//	return t;
+//}
 
 void xtSplitBuilder::TessellateFaceWithWBO( xtCollisionEntity *ps, xtGeometrySurfaceDataS *surf0, xtGeometrySurfaceDataS *surf1 )
 {
@@ -954,6 +955,7 @@ void xtSplitBuilder::TessellateFaceWithWBO( xtCollisionEntity *ps, xtGeometrySur
 		boundaryPntStart=rotm*boundaryPntStart;
 		xtTriPnt2 bPntStart = {boundaryPntStart.x(),boundaryPntStart.y()};
 		verts2d.push_back(bPntStart);
+		ss->aftertrinodeslist.push_back( ss->segwbo[0]->v[0].abv );
 		// treat the start and end as a special case
 		for ( size_t i=1; i<ss->segwbo.size(); ++i ) {
 			xtVector3d pnt;// = *(ss->segwbo[i]->v[0].v);
@@ -970,11 +972,14 @@ void xtSplitBuilder::TessellateFaceWithWBO( xtCollisionEntity *ps, xtGeometrySur
 			pnt = rotm*pnt;
 			xtTriPnt2 pnt2d = {pnt.x(),pnt.y()};
 			verts2d.push_back(pnt2d);
+			ss->aftertrinodeslist.push_back( ss->segwbo[i]->v[0].abv );
 		}
+		// polyline's tail nodes the total num of verts = total num of edges + 1
 		xtVector3d boundaryPntEnd   = *(ss->segwbo[ss->segwbo.size()-1]->v[1].v);
 		boundaryPntEnd = rotm*boundaryPntEnd;
 		xtTriPnt2 bPntEnd = {boundaryPntEnd.x(),boundaryPntEnd.y()};
 		verts2d.push_back(bPntEnd);
+		ss->aftertrinodeslist.push_back( ss->segwbo[ss->segwbo.size()-1]->v[1].abv );
 
 		// 2) pack the topology segment connectivity
 		xtSeg2WithMarker segmarker;
@@ -1355,18 +1360,24 @@ void xtSplitBuilder::ConstructSplitSegmentsWithEndPoint()
 			nsegwboi->v[0].type = ON_SURFACE;
 			nsegwboi->v[0].v = spJlist[(falseIdxJ+1)%3];
 			nsegwboi->v[0].idx = -1;
+			xtAbosoluteVertex *v0 = mAbpool.AddVert( ON_SPLIT, spJlist[(falseIdxJ+1)%3], -1 );
+			nsegwboi->v[0].abv = v0;
 			nsegwboi->v[1].type = ON_SURFACE;
 			nsegwboi->v[1].v = spJlist[(falseIdxJ+2)%3];
 			nsegwboi->v[1].idx = -1;
+			xtAbosoluteVertex *v1 = mAbpool.AddVert( ON_SPLIT, spJlist[(falseIdxJ+2)%3], -1 );
+			nsegwboi->v[1].abv = v1;
 			mPSJ->AddSegWBOToFace(fJidx, nsegwboi);
 
 			xtSegmentWBO *nsegwboj = new xtSegmentWBO;
 			nsegwboj->v[0].type = ON_BOUNDARY;
 			nsegwboj->v[0].v = spJlist[(falseIdxJ+1)%3];
 			nsegwboj->v[0].idx = (falseIdxJ+1)%3;
+			nsegwboj->v[0].abv = v0;
 			nsegwboj->v[1].type = ON_BOUNDARY;
 			nsegwboj->v[1].v = spJlist[(falseIdxJ+2)%3];
 			nsegwboj->v[1].idx = (falseIdxJ+2)%3;
+			nsegwboj->v[1].abv = v1;
 			mPSI->AddSegWBOToFace(fIidx, nsegwboj);
 
 		} else if ( 1==numIntersectWI&&1==numIntersectWJ ) {
@@ -1391,18 +1402,24 @@ void xtSplitBuilder::ConstructSplitSegmentsWithEndPoint()
 			nsegwboi->v[0].type = ON_BOUNDARY;
 			nsegwboi->v[0].v = spIlist[iiidx];
 			nsegwboi->v[0].idx = iiidx;
+			xtAbosoluteVertex *v0 = mAbpool.AddVert( ON_SPLIT, spIlist[iiidx], -1 );
+			nsegwboi->v[0].abv = v0;
 			nsegwboi->v[1].type = ON_SURFACE;
 			nsegwboi->v[1].v = spJlist[ijidx];
 			nsegwboi->v[1].idx = -1;
+			xtAbosoluteVertex *v1 = mAbpool.AddVert( ON_SPLIT, spJlist[ijidx], -1 );
+			nsegwboi->v[1].abv = v1;
 			mPSJ->AddSegWBOToFace(fJidx, nsegwboi);
 
 			xtSegmentWBO *nsegwboj = new xtSegmentWBO;
 			nsegwboj->v[0].type = ON_BOUNDARY;
 			nsegwboj->v[0].v = spJlist[ijidx];
 			nsegwboj->v[0].idx = ijidx;
+			nsegwboj->v[0].abv = v1;
 			nsegwboj->v[1].type = ON_SURFACE;
 			nsegwboj->v[1].v = spIlist[iiidx];
 			nsegwboj->v[1].idx = -1;
+			nsegwboj->v[1].abv = v0;
 			mPSI->AddSegWBOToFace(fIidx, nsegwboj);
 			
 		} else if ( 2==numIntersectWI && 0==numIntersectWJ ) {
@@ -1416,7 +1433,7 @@ void xtSplitBuilder::ConstructSplitSegmentsWithEndPoint()
 			newseg->seg0 = spIlist[(falseIdx+1)%3];
 			newseg->seg1 = spIlist[(falseIdx+2)%3];
 			mSharedSplitSegList.push_back(newseg);
-
+		
 			mPSI->AddSplitSegmentToFace(fIidx,newseg);
 			mPSJ->AddSplitSegmentToFace(fJidx,newseg);
 			mFFM[ffkey] = newseg;
@@ -1426,18 +1443,24 @@ void xtSplitBuilder::ConstructSplitSegmentsWithEndPoint()
 			nsegwboi->v[0].type = ON_BOUNDARY;
 			nsegwboi->v[0].v = spIlist[(falseIdx+1)%3];
 			nsegwboi->v[0].idx = (falseIdx+1)%3;
+			xtAbosoluteVertex *v0 = mAbpool.AddVert( ON_SPLIT, spIlist[(falseIdx+1)%3], -1 );
+			nsegwboi->v[0].abv = v0;
 			nsegwboi->v[1].type = ON_BOUNDARY;
 			nsegwboi->v[1].v = spIlist[(falseIdx+2)%3];
 			nsegwboi->v[1].idx = (falseIdx+2)%3;
+			xtAbosoluteVertex *v1 = mAbpool.AddVert( ON_SPLIT, spIlist[(falseIdx+2)%3], -1 );
+			nsegwboi->v[1].abv = v1;
 			mPSJ->AddSegWBOToFace(fJidx, nsegwboi);
 
 			xtSegmentWBO *nsegwboj = new xtSegmentWBO;
 			nsegwboj->v[0].type = ON_SURFACE;
 			nsegwboj->v[0].v = spIlist[(falseIdx+1)%3];
 			nsegwboj->v[0].idx = -1;
+			nsegwboj->v[0].abv = v0;
 			nsegwboj->v[1].type = ON_SURFACE;
 			nsegwboj->v[1].v = spIlist[(falseIdx+2)%3];
 			nsegwboj->v[1].idx = -1;
+			nsegwboj->v[1].abv = v1;
 			mPSI->AddSegWBOToFace(fIidx, nsegwboj);
 			
 		} else if ( 3==numIntersectWI&&0==numIntersectWJ) {
@@ -1470,18 +1493,24 @@ void xtSplitBuilder::ConstructSplitSegmentsWithEndPoint()
 			nsegwboi->v[0].type = ON_V;
 			nsegwboi->v[0].v = NULL;
 			nsegwboi->v[0].idx = (falseIidx+2)%3;
+			xtAbosoluteVertex *v0 = mAbpool.AddVert( ON_SURFACE_I, NULL, triaI.a[nsegwboi->v[0].idx] );
+			nsegwboi->v[0].abv = v0;
 			nsegwboi->v[1].type = ON_SURFACE;
 			nsegwboi->v[1].v = spJlist[trueJidx];
 			nsegwboi->v[1].idx = -1;
+			xtAbosoluteVertex *v1 = mAbpool.AddVert( ON_SPLIT, spJlist[trueJidx], -1 );
+			nsegwboi->v[1].abv = v1;
 			mPSJ->AddSegWBOToFace(fJidx, nsegwboi);
 
 			xtSegmentWBO *nsegwboj = new xtSegmentWBO;
 			nsegwboj->v[0].type = ON_SURFACE_V;
 			nsegwboj->v[0].v = NULL;
 			nsegwboj->v[0].idx = triaI.a[(falseIidx+2)%3];
+			nsegwboj->v[0].abv = v0;
 			nsegwboj->v[1].type = ON_BOUNDARY;
 			nsegwboj->v[1].v = spJlist[trueJidx];
 			nsegwboj->v[1].idx = -1;
+			nsegwboj->v[1].abv = v1;
 			mPSI->AddSegWBOToFace(fIidx, nsegwboj);
 			
 			//debug
@@ -1512,18 +1541,24 @@ void xtSplitBuilder::ConstructSplitSegmentsWithEndPoint()
 			nsegwboi->v[0].type = ON_BOUNDARY;
 			nsegwboi->v[0].v = spIlist[trueIidx];
 			nsegwboi->v[0].idx = -1;
+			xtAbosoluteVertex *v0 = mAbpool.AddVert( ON_SPLIT, spIlist[trueIidx], -1 );
+			nsegwboi->v[0].abv = v0;
 			nsegwboi->v[1].type = ON_SURFACE_V;
 			nsegwboi->v[1].v = NULL;
 			nsegwboi->v[1].idx = triaJ.a[(falseJidx+2)%3];
+			xtAbosoluteVertex *v1 = mAbpool.AddVert( ON_SRUFACE_J, NULL, triaJ.a[(falseJidx+2)%3]);
+			nsegwboi->v[1].abv = v1;
 			mPSJ->AddSegWBOToFace(fJidx, nsegwboi);
 
 			xtSegmentWBO *nsegwboj = new xtSegmentWBO;
 			nsegwboj->v[0].type = ON_SURFACE;
 			nsegwboj->v[0].v = spIlist[trueIidx];
 			nsegwboj->v[0].idx = -1;
+			nsegwboj->v[0].abv = v0;
 			nsegwboj->v[1].type = ON_V;
 			nsegwboj->v[1].v = NULL;
 			nsegwboj->v[1].idx = (falseJidx+2)%3;
+			nsegwboj->v[1].abv = v1;
 			mPSI->AddSegWBOToFace(fIidx, nsegwboj);
 			
 			printf("I1J2\n");
@@ -1536,9 +1571,9 @@ void xtSplitBuilder::ConstructSplitSegmentsWithEndPoint()
 			printf( "I\t%d, J\t%d\n",numIntersectWI,numIntersectWJ);
 			assert(false);
 		}
-
-
 	}
+
+	mAbpool.NormalizeIndexInPool();
 }
 
 void xtSplitBuilder::ConstructSplitSegments()
@@ -1744,7 +1779,7 @@ void xtSplitBuilder::ConcatenationPolyLine(std::vector<std::tuple<int,int>> &seg
 	//	vertslot.push_back(t);
 	//}
 	std::vector<std::vector<int>> vertslotv;
-	for ( size_t i=0; i<numofverts; ++i ) {
+	for ( int i=0; i<numofverts; ++i ) {
 		std::vector<int> v;
 		v.reserve(2);
 		vertslotv.push_back(v);
@@ -1833,6 +1868,11 @@ void xtSplitBuilder::FilterAdjacentVerts2d(std::vector<xtTriPnt2> &verts2d, std:
 	}
 	segmarkerlist.erase(segmarkerlist.begin()+3,segmarkerlist.end());
 	segmarkerlist.insert(segmarkerlist.begin()+3,cacheback.begin(),cacheback.end());
+}
+
+void xtSplitBuilder::BuildMeshConnectivity()
+{
+	
 }
 
 // Got distance from 

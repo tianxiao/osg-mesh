@@ -95,26 +95,232 @@ enum xtVertexWBOType
 {
 	ON_BOUNDARY,
 	ON_SURFACE,
-	ON_SURFACE_V,
+	ON_SURFACE_V,  // ot
 	ON_V,
 };
 
+// But after I add the absolute point 
+enum xtAbosoluteVertexType
+{
+	// ON_SURFACE is degenerate case in the intersection stage
+	// while ON_SPLIT is the normal edge-tri intersection point
+	ON_SURFACE_I,
+	ON_SRUFACE_J,
+	ON_SPLIT,
+};
+
+// try use the interface 
+struct xtAbosoluteVertex
+{
+	xtAbosoluteVertexType type;
+	xtVector3d *splitpnt;
+	int idx;
+
+	int vIdInPool;
+
+	void InitVert( xtAbosoluteVertexType type, xtVector3d *splitpnt, int idx ) 
+	{
+		this->type = type;
+		this->splitpnt = splitpnt;
+		this->idx = idx;
+	}
+
+	bool operator==(xtAbosoluteVertex &v)
+	{
+		return type==v.type && splitpnt==v.splitpnt && idx==v.idx;
+	}
+};
+
+class xtAbosoluteVertexPool
+{
+	friend class xtCPMesh;
+public:
+	~xtAbosoluteVertexPool() 
+	{
+		for ( size_t i=0; i<mAbverts.size(); ++i ) {
+			delete mAbverts[i];
+			mAbverts[i] = NULL;
+		}
+	};
+
+	xtAbosoluteVertex *AddVert( xtAbosoluteVertexType type, xtVector3d *splitpnt, int idx )
+	{
+		xtAbosoluteVertex *rlt = FindVert( type, splitpnt, idx );
+		if ( !rlt ) {
+			rlt = new xtAbosoluteVertex;
+			rlt->InitVert( type, splitpnt, idx );
+			mAbverts.push_back(rlt);
+		}
+		return rlt;
+	};
+
+	void NormalizeIndexInPool()
+	{
+		for ( size_t i=0; i<mAbverts.size(); ++i ) {
+			mAbverts[i]->vIdInPool = i;
+		}
+	};
+
+private:
+	xtAbosoluteVertex *FindVert(xtAbosoluteVertexType type, xtVector3d *splitpnt, int idx)
+	{
+		xtAbosoluteVertex *rlt = NULL;
+		for ( size_t i=0; i<mAbverts.size(); ++i ) {
+			xtAbosoluteVertex *c = mAbverts[i];
+			if ( c->type == type &&
+				c->splitpnt == splitpnt &&
+				c->idx == idx ) {
+				rlt = mAbverts[i];
+			}
+		}
+		return rlt;
+	}
+
+private:
+	std::vector<xtAbosoluteVertex *> mAbverts;
+};
+
+//=======================Experimental Codes=============================
+// Next TODO!
+// create a factory method hold all those points and expose an API
+// for easy get and use those different point
+class xtAbstractVertex
+{
+public:
+	xtAbstractVertex() {};
+	virtual ~xtAbstractVertex() =0{};
+};
+
+class xtMeshVertex :public xtAbstractVertex
+{
+public:
+	xtMeshVertex() {};
+	~xtMeshVertex() {};
+
+private:
+	xtAbosoluteVertexType type;  // on surface I or on surface J
+	int idx;
+};
+
+class xtSplitPVertex : public xtAbstractVertex
+{
+public:
+	xtSplitPVertex() {};
+	~xtSplitPVertex() {};
+private:
+	xtVector3d *splitpnt;
+};
+//======================================================================
+
+
+// This WBO is not self contained 
+// It is at the surface slot context
+// and use the surface data.
+
 struct xtVertexWBO
 {
+	// Add the point on triangle segment field for convenient 
+	// tessellation
 	xtVertexWBOType type;
 	xtVector3d *v;
 	int idx;
+	// abv is for unifying all the new generated point during the 
+	// intersection.
+	xtAbosoluteVertex *abv;
+
+	void SetWBO(xtVertexWBOType type, xtVector3d *v, int idx ) 
+	{
+		this->type = type;
+		this->v = v;
+		this->idx =idx;
+	};
 
 	bool operator==(const xtVertexWBO &v) {
 		return type==v.type&&this->v==v.v&&idx==v.idx;
 	}
 };
 
+inline void SetWBOAbosoluteVertex( xtVertexWBO &wbo, xtAbosoluteVertexType type, xtVector3d *splitpnt, int idx, xtAbosoluteVertexPool &abpool)
+{
+	wbo.abv = abpool.AddVert( type, splitpnt, idx );
+};
+
 struct xtSegmentWBO
 {
 	xtVertexWBO v[2];
+	xtVertexWBO *pv[2];
 };
 
+struct FindWBOComp
+{
+	FindWBOComp(xtVertexWBO *c):self(c){};
+	bool operator()(xtVertexWBO *v)
+	{
+		return *v==*self;
+	};
+
+private:
+	xtVertexWBO *self;
+};
+
+class xtSegmentWBOPool
+{
+public:
+	~xtSegmentWBOPool() 
+	{
+		for ( size_t i=0; i<verts.size(); ++i ) {
+			delete verts[i];
+			verts[i] = NULL;
+		}
+	}
+
+	xtVertexWBO *AddVert(xtVertexWBOType type, xtVector3d *v, int idx )
+	{
+		xtVertexWBO *rlt = FindVert( type, v, idx );
+		if ( !rlt ) {
+			rlt = new xtVertexWBO;
+			rlt->SetWBO( type, v, idx );
+		}
+		return rlt;
+	}
+
+private:
+
+	xtVertexWBO *FindVert( xtVertexWBOType type, xtVector3d *v, int idx )
+	{
+		xtVertexWBO wbo;
+		wbo.SetWBO(type, v, idx);
+		return FindVert( &wbo );
+	}
+
+	xtVertexWBO *FindVert(xtVertexWBO *x)
+	{
+		FindWBOComp findcomp(x);
+		xtVertexWBO *rlt = NULL;
+		std::vector<xtVertexWBO *>::iterator findit = 
+			std::find_if( verts.begin(), verts.end(), findcomp );
+		if ( findit!=verts.end() ) {
+			return *findit;
+		}
+		return rlt;
+	}
+
+private:
+	std::vector<xtVertexWBO *> verts;
+};
+
+
+inline xtSegmentWBO *CreateSeg(
+	xtVertexWBOType type0, xtVector3d *v0, int idx0,
+	xtVertexWBOType type1, xtVector3d *v1, int idx1,
+	xtSegmentWBOPool &wbopool
+	)
+{
+	xtSegmentWBO *seg = new xtSegmentWBO;
+	seg->pv[0] = wbopool.AddVert( type0, v0, idx0 );
+	seg->pv[1] = wbopool.AddVert( type1, v1, idx1 );
+	return seg;
+};
 
 struct xtSurfaceSlot
 {
@@ -135,6 +341,8 @@ struct xtSurfaceSlot
 	//====================================
 	std::vector<xtSegmentWBO *> segwbo;
 
+	// cache the 3~n nodes the 0~2 nodes is the triangle's nodes
+	std::vector<xtAbosoluteVertex *> aftertrinodeslist;
 	// output split triangle
 	std::vector<xtIndexTria3 > tris;  
 	// pre 3 is the tirangle idx should be reference to the surface data
@@ -255,6 +463,7 @@ namespace xtOctreeDisplayUtility
 struct xtGeometrySurfaceDataS;
 class xtCollisionEntity
 {
+	friend class xtCPMesh;
 	friend class xtSplitBuilder;
 	friend osg::Geode * xtOctreeDisplayUtility::RenderSplitSegmentsWBODebug(xtSplitBuilder *splitBuilder, xtColor color, float linewidth/*=4.0*/);
 	// friends cannot propagate, A is B's friends B is C's friends, A and C may not be friends. can not access each other.
@@ -262,6 +471,8 @@ public:
 	~xtCollisionEntity() {
 		DestroyMem();
 	}
+
+	std::vector<xtSurfaceSlot *> &AccessSurfaceSlotList() { return surfslot; };
 
 	void InitializeCollisionEntity(xtGeometrySurfaceDataS *surf, std::vector<xtCollidePair> &pairs, xtSurfaceCat surfcat);
 	void AddSplitSegmentToFace(const int fi, xtSegment *seg);
@@ -331,6 +542,7 @@ struct xtDegeneratePoint
 
 
 class xtCollisionEngine;
+class xtCPMesh;
 class xtSplitBuilder
 {
 	friend class xtInterferecenTest;
@@ -364,6 +576,8 @@ private:
 	void TessellateCollidedFaceRobust( xtCollisionEntity *ps, xtCollisionEngine *ce, const int type);
 	void TessellateFaceWithWBO( xtCollisionEntity *ps, xtGeometrySurfaceDataS *surf0, xtGeometrySurfaceDataS *surf1 );
 
+	void BuildMeshConnectivity();
+
 	void InitializeCollisionEntity();
 	void DestroyMem();
 
@@ -393,6 +607,11 @@ private:
 	std::vector<xtSplitVertex *> mSharedSplitVerts;
 	xtSFVMap mSFMVI;
 	xtSFVMap mSFMVJ;
+
+	// like the about store the shared field in the interface
+	// This pool store the shared edge-triangle surface 
+	// For unify the verts
+	xtAbosoluteVertexPool mAbpool;
 
 
 	// Add degenerate case

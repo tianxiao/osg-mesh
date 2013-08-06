@@ -19,6 +19,9 @@ public:
 	xtCollisionEngine(void);
 	~xtCollisionEngine(void);
 
+	xtGeometrySurfaceDataS *AccessSurfI() { return mSurfI; };
+	xtGeometrySurfaceDataS *AccessSurfJ() { return mSurfJ; };
+
 	void SetSurfIJ(xtGeometrySurfaceDataS *surfI, xtGeometrySurfaceDataS *surfJ) 
 	{
 		this->mSurfI = surfI;
