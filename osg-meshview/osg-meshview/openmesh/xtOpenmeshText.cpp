@@ -49,6 +49,8 @@ void xtOpenmeshText::TestOppositeFaceHandel()
 	for ( ; fhit!=mesh.fh_end( fh[0] ); ++fhit ) {
 		printf ( "------\n" );
 		printf ( "Fist face he %d\n", fhit.handle().idx() );
+		//printf ( "Face hand %d \n", fhit.handle() );
+		printf ( "Face hand %d \n", mesh.face_handle( fhit.handle() ) );
 		printf ( "HEID face node %d, %d \n" , 
 			//fhit.handle
 			//mesh.vertex_handle(fhit.current_halfedge_handle).idx(),
@@ -58,6 +60,7 @@ void xtOpenmeshText::TestOppositeFaceHandel()
 			//mesh.opposite_vh(fhit).idx()
 			mesh.to_vertex_handle( fhit ).idx()
 			);
+		
 		printf ( "Fist face he opp %d\n", mesh.opposite_face_handle( fhit ) );
 	}
 
