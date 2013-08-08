@@ -9,9 +9,11 @@ public:
 	void RunTest()
 	{
 		TestOppositeFaceHandel();
+		TestDeleteFaceTrue();
 	}
 
 private:
 	void TestOppositeFaceHandel();
+	void TestDeleteFaceTrue();
 };
 

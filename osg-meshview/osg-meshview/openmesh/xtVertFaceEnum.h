@@ -1,9 +1,21 @@
 #pragma once
 
+// RED means the two model overlapping area
+// GREEN means the gouge free area.
+
+enum xtPntOverlapState
+{
+	PNT_UNDER,
+	PNT_ABOVE,
+	PNT_UNTAGGED,
+};
+
 enum xtIntersectionPnt
 {
 	UN_TAGEDPNT,
 	XT_BOUNDARY_SPLIT_PNT,
+	GREENPNT,
+	REDPNT,
 };
 
 enum xtIntersectFace
