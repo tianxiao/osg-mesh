@@ -288,13 +288,19 @@ void xtCPMesh::TagIstBoundaryHalfedge2()
 		txMyOPMesh::VertexHandle vnexthandle = mData->mesh.vertex_handle( mVHandleidxs[vidxnext] );
 		txMyOPMesh::VOHIter vohit=mData->mesh.voh_begin( vhandle );
 		for ( ; vohit!=mData->mesh.voh_end(vhandle); ++vohit ) {
-			if ( mData->mesh.opposite_vh( vohit )==vnexthandle ) {
+//			if ( mData->mesh.opposite_vh( vohit )==vnexthandle ) {
+//				mData->mesh.data( vohit ).SetType( ON_BOUNDARYO );
+//			}
+			if ( mData->mesh.to_vertex_handle( vohit )==vnexthandle ) {
 				mData->mesh.data( vohit ).SetType( ON_BOUNDARYO );
 			}
 		}
 		txMyOPMesh::VIHIter vihit=mData->mesh.vih_begin( vhandle );
 		for ( ; vihit!=mData->mesh.vih_end(vhandle); ++vihit ) {
-			if ( mData->mesh.opposite_vh( vihit )==vnexthandle ) {
+//			if ( mData->mesh.opposite_vh( vihit )==vnexthandle ) {
+//				mData->mesh.data( vihit ).SetType( ON_BOUNDARYO );
+//			}
+			if ( mData->mesh.from_vertex_handle( vihit )==vnexthandle ) {
 				mData->mesh.data( vihit ).SetType( ON_BOUNDARYO );
 			}
 		}
@@ -466,7 +472,7 @@ void xtCPMesh::TagFace2()
 		// using the face-halfedge iterator
 		txMyOPMesh::FHIter fhit=mData->mesh.fh_begin( fhandle );
 		for ( ; fhit!=mData->mesh.fh_end( fhandle ); ++fhit ) {
-			txMyOPMesh::FaceHandle oppfacehandle = mData->mesh.opposite_face_handle( fhit.current_halfedge_handle() );
+			txMyOPMesh::FaceHandle oppfacehandle = mData->mesh.opposite_face_handle( fhit );
 			if ( 
 				mData->mesh.data( oppfacehandle ).Type()==UN_TAGGEDFACE  &&
 				mData->mesh.data( fhit.handle() ).Type()!=ON_BOUNDARYO 
@@ -482,7 +488,7 @@ void xtCPMesh::TagFace2()
 					//}
 				adjqueue.push( oppfacehandle );
 			} else if ( mData->mesh.data( fhit ).Type()==ON_BOUNDARYO ) {
-				mData->mesh.data( oppfacehandle ).SetType( GREEN );
+				//mData->mesh.data( oppfacehandle ).SetType( GREEN );
 				printf( "%%%%\n" );
 			}
 		}
