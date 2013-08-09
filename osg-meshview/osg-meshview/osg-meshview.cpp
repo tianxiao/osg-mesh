@@ -54,6 +54,9 @@
 // test mem pool
 #include "./coreutil/xtMemPoolTest.h"
 
+// test Openmesh api
+#include "./openmesh/xtOpenmeshText.h"
+
 
 osg::Node *createScene()
 {
@@ -557,6 +560,12 @@ static inline void TestFunctionForeach()
 	TestFunction(IntSquare);
 }
 
+static inline void TestOpenmeshAPI()
+{
+	xtOpenmeshText test;
+	test.RunTest();
+}
+
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -569,6 +578,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	//return TestGTSParser();
 	//return TestGTSCollision();
 	TestGTSCollisionMoreCompact();
+	//TestOpenmeshAPI();
 	//return TestTriTriIntersection();
 	//return TestGTSCollisionMoreCompactLittleModel();
 	//TestFunctionForeach();

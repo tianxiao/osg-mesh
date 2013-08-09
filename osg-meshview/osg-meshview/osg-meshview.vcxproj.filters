@@ -25,6 +25,9 @@
     <Filter Include="openmesh">
       <UniqueIdentifier>{20fdfd2a-5e91-4299-924d-fd0c17a36fdf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="RenderUtil">
+      <UniqueIdentifier>{4711f7b1-6f29-4742-bbdf-dbbc4a0b7a0c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -204,6 +207,15 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="openmesh\xtVertFaceEnum.h">
+      <Filter>openmesh</Filter>
+    </ClInclude>
+    <ClInclude Include="xtRenderUtil.h">
+      <Filter>RenderUtil</Filter>
+    </ClInclude>
+    <ClInclude Include="openmesh\xtOpenmeshText.h">
+      <Filter>openmesh</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -339,6 +351,12 @@
       <Filter>openmesh</Filter>
     </ClCompile>
     <ClCompile Include="openmesh\xtCPMesh.cpp">
+      <Filter>openmesh</Filter>
+    </ClCompile>
+    <ClCompile Include="xtRenderUtil.cpp">
+      <Filter>RenderUtil</Filter>
+    </ClCompile>
+    <ClCompile Include="openmesh\xtOpenmeshText.cpp">
       <Filter>openmesh</Filter>
     </ClCompile>
   </ItemGroup>

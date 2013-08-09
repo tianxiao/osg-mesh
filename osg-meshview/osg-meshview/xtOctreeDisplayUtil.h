@@ -12,6 +12,7 @@ public:
 
 struct xtGeometrySurfaceDataS;
 class xtSplitBuilder;
+class xtCPMesh;
 namespace osg
 {
 	class Geode;
@@ -54,4 +55,6 @@ namespace xtOctreeDisplayUtility
 	osg::Geode *RenderPlanarTriSplitSegs(xtSplitBuilder *sb);
 
 	osg::Group *RenderPlanarTris(xtSplitBuilder *sb);
+
+	osg::Group *RenderCPMesh( xtCPMesh *mesh );
 };

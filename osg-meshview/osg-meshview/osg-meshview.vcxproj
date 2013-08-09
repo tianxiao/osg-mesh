@@ -92,6 +92,8 @@
     <ClInclude Include="OctreePoint.h" />
     <ClInclude Include="openmesh\xtCPMesh.h" />
     <ClInclude Include="openmesh\xtOpenmeshHeader.h" />
+    <ClInclude Include="openmesh\xtOpenmeshText.h" />
+    <ClInclude Include="openmesh\xtVertFaceEnum.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="RTree.h" />
     <ClInclude Include="stdafx.h" />
@@ -125,6 +127,7 @@
     <ClInclude Include="xtPrimitive.h" />
     <ClInclude Include="xtPrimitiveTestUtil.h" />
     <ClInclude Include="xtRayTriOverlay.h" />
+    <ClInclude Include="xtRenderUtil.h" />
     <ClInclude Include="xtSectionOctree.h" />
     <ClInclude Include="xtSplitBuilder.h" />
     <ClInclude Include="xtTestSTLFunction.h" />
@@ -147,6 +150,7 @@
     <ClCompile Include="mxtOctreeScene.cpp" />
     <ClCompile Include="openmesh\xtCPMesh.cpp" />
     <ClCompile Include="openmesh\xtOpenmeshHeader.cpp" />
+    <ClCompile Include="openmesh\xtOpenmeshText.cpp" />
     <ClCompile Include="osg-meshview.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -175,6 +179,7 @@
     <ClCompile Include="xtPrimitive.cpp" />
     <ClCompile Include="xtPrimitiveTestUtil.cpp" />
     <ClCompile Include="xtRayTriOverlay.cpp" />
+    <ClCompile Include="xtRenderUtil.cpp" />
     <ClCompile Include="xtSectionOctree.cpp" />
     <ClCompile Include="xtSplitBuilder.cpp" />
     <ClCompile Include="xtTestSTLFunction.cpp" />

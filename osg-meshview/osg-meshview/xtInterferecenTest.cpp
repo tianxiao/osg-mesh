@@ -5,6 +5,7 @@
 #include "../buildpyramidGeometry/osgcommon.h"
 #include "xtCollisionEngine.h"
 #include "xtOctreeDisplayUtil.h"
+#include "xtRenderUtil.h"
 #include "xtSplitBuilder.h"
 #include "./OpenMesh/xtCPMesh.h"
 
@@ -67,14 +68,19 @@ void xtInterferecenTest::SetUpScene()
 
 	if ( mCE->Collide() ) {
 		std::vector<xtCollidePair> &pairs = mCE->GetColliedPairs();
-		sceneRoot->addChild( xtOctreeDisplayUtility::RenderCollided(mSurfI,mSurfJ,pairs) );
+		//sceneRoot->addChild( xtOctreeDisplayUtility::RenderCollided(mSurfI,mSurfJ,pairs) );
 		mSB = new xtSplitBuilder;
 		mSB->SetCE(mCE); mSB->Split();
 
 		UpdateConnectivity();
+
+		Difference();
+
+		sceneRoot->addChild( xtRenderUtil::RenderCPMesh( mMeshI ) );
+
 		//sceneRoot->addChild( xtOctreeDisplayUtility::RenderSplitSegments(mSB,xtColor(0.0,1.0,1.0,1.0),5.0f) );
 		//sceneRoot->addChild( xtOctreeDisplayUtility::RenderSplitSegmentsWithCyliner(mSB,xtColor(0.0,1.0,1.0,1.0),0.001f) );
-		sceneRoot->addChild( xtOctreeDisplayUtility::RednerSplitPntsAsSphere(mSB,xtColor(1.0,0.0,0.0,1.0),0.002f) );
+		//sceneRoot->addChild( xtOctreeDisplayUtility::RednerSplitPntsAsSphere(mSB,xtColor(1.0,0.0,0.0,1.0),0.002f) );
 #if XT_DEBUG_PLANAR_TRI_SET
 		//sceneRoot->addChild( xtOctreeDisplayUtility::RkenderPlanarTriSplitSegs(mSB) );
 #endif
@@ -82,7 +88,7 @@ void xtInterferecenTest::SetUpScene()
 		sceneRoot->addChild( xtOctreeDisplayUtility::RenderRaySegment(mSB) );
 #endif
 		sceneRoot->addChild( xtOctreeDisplayUtility::RenderPlanarTris(mSB) );
-		sceneRoot->addChild( xtOctreeDisplayUtility::RenderSplitSegmentsWBODebug(mSB,xtColor(0.0,0.0,1.0,1.),0.001f) );
+		//sceneRoot->addChild( xtOctreeDisplayUtility::RenderSplitSegmentsWBODebug(mSB,xtColor(0.0,0.0,1.0,1.),0.001f) );
 	}
 
 
@@ -114,6 +120,12 @@ void xtInterferecenTest::UpdateConnectivity()
 {
 	mMeshI->LoadRawData( mSB->mPSI, &(mSB->mAbpool) );
 	mMeshJ->LoadRawData( mSB->mPSJ, &(mSB->mAbpool) );
+}
+
+void xtInterferecenTest::Difference()
+{
+	mMeshI->Difference( *mMeshJ );
+	//mMeshJ->Difference( *mMeshI );
 }
 
 int xtInterferecenTest::RunScene()

@@ -26,6 +26,7 @@ public:
 private:
 	void LoadRawMesh();
 	void UpdateConnectivity();
+	void Difference();
 
 private:
 	xtGeometrySurfaceDataS *mSurfI;
