@@ -67,6 +67,7 @@ private:
 	void ReReMarkRedGreenTria();
 
 	// boolean operation 
+	void ReSetmVHandleidxs();
 	void MatchBoundary( xtCPMesh &om );
 	void MarkNewAssignedVertex( xtCPMesh &om );
 	void TagRedVertex();
@@ -97,6 +98,7 @@ private:
 	std::vector<unsigned int> mIstOrder;   
 	// cache the addin split point's 
 	std::vector<unsigned int> mVHandleidxs;
+	std::vector<void *> mVertexList;
 
 	// only for debug
 	std::vector<unsigned int> mHEBs;

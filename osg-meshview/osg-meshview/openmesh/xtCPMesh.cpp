@@ -206,6 +206,7 @@ void xtCPMesh::Remesh()
 		xtVector3d *p = v->splitpnt;
 		txMyOPMesh::VHandle vhandle = mData->mesh.add_vertex( txMyOPMesh::Point( (float)p->x(), (float)p->y(), (float)p->z() ) ) ;
 		mData->mesh.data( vhandle ).SetType( XT_BOUNDARY_SPLIT_PNT );
+		mData->mesh.data( vhandle ).SetVinPoolIdx( v->vIdInPool );
 		vhandles.push_back( vhandle );
 	}
 
@@ -218,6 +219,14 @@ void xtCPMesh::Remesh()
 		mVHandleidxs.push_back( vhandles[i].idx() );
 	}
 
+
+	mVertexList.reserve( vhandles.size() );
+	for ( size_t i=0; i<vhandles.size(); ++i ) {
+		mVertexList.push_back( static_cast<void*>( &(mData->mesh.vertex( vhandles[i] ))) );
+	}
+	//txMyOPMesh::Vertex *v;
+	//mData->mesh.vertex_handle( *v );
+	
 
 	for ( size_t i=0; i<mCE->surfslot.size(); ++i ) {
 		xtSurfaceSlot *ss = mCE->surfslot[i];	
@@ -661,8 +670,21 @@ void xtCPMesh::Intersection( xtCPMesh &om )
 
 }
 
+void xtCPMesh::ReSetmVHandleidxs()
+{
+	txMyOPMesh::VIter vit=mData->mesh.vertices_begin();
+	for ( ; vit!=mData->mesh.vertices_end(); ++vit ) {
+		int vinpoolidx = mData->mesh.data( vit ).GetVinPoolIdx();
+		if ( vinpoolidx>-1 ) {
+			mVHandleidxs[vinpoolidx] = vit.handle().idx();
+		}
+	}
+}
+
 void xtCPMesh::MatchBoundary( xtCPMesh &om )
 {
+	ReSetmVHandleidxs();
+
 	//==============================================
 	// Match the Boundary
 	assert( mIstOrder.size()==om.mIstOrder.size() );
@@ -677,14 +699,40 @@ void xtCPMesh::MatchBoundary( xtCPMesh &om )
 			for ( int i=omidx0; i<omidx0+istlen; ++i ) {
 				om.mData->mesh.data( om.mData->mesh.vertex_handle(
 					om.mVHandleidxs[om.mIstOrder[i%istlen]] ) 
-					).SetReassingedIdx( mVHandleidxs[mIstOrder[scout++]] );
+					).SetReassingedIdx( mVHandleidxs[mIstOrder[scout]] );
+				// for debug
+				printf( "S: %d\t O: %d\n", 
+					mData->mesh.vertex_handle( mVHandleidxs[mIstOrder[scout]] ),
+					om.mData->mesh.vertex_handle( om.mVHandleidxs[om.mIstOrder[i%istlen]] ) );
+				//txMyOPMesh::Point dis = (
+				//	om.mData->mesh.point( om.mData->mesh.vertex_handle( om.mVHandleidxs[om.mIstOrder[i%istlen]]) ) -
+				//	mData->mesh.point( mData->mesh.vertex_handle(mVHandleidxs[mIstOrder[scout]]) ) );
+				//printf ( "%f\n", dis.norm() );
+				
+				scout++;
 			}
 		} else if ( om.mIstOrder[(omidx0-1+istlen)%istlen]==mIstOrder[1] ) {
 			int scout=0;
 			for ( int i=omidx0; i>omidx0-istlen; --i ) {
 				om.mData->mesh.data( om.mData->mesh.vertex_handle(
 					om.mVHandleidxs[om.mIstOrder[(i+istlen)%istlen]] )
-					).SetReassingedIdx( mVHandleidxs[mIstOrder[scout++]] );
+					).SetReassingedIdx( mVHandleidxs[mIstOrder[scout]] );
+
+				// for debug
+#if 0
+				printf( "sS: %d oO: %d\n", 
+					mIstOrder[scout],
+					om.mIstOrder[(i+istlen)%istlen]);
+				printf( "S: %d\t O: %d\n", 
+					mData->mesh.vertex_handle( mVHandleidxs[mIstOrder[scout]] ),
+					om.mData->mesh.vertex_handle( om.mVHandleidxs[om.mIstOrder[(i+istlen)%istlen]] ) );
+#endif
+				txMyOPMesh::Point dis = ( 
+					om.mData->mesh.point( om.mData->mesh.vertex_handle(om.mVHandleidxs[om.mIstOrder[(i+istlen)%istlen]]) ) -
+					mData->mesh.point( mData->mesh.vertex_handle(mVHandleidxs[mIstOrder[scout]]) ) );
+				printf ( "%f\n", dis.norm() );
+
+				scout++;
 			}
 		} else {
 			assert(false);
@@ -704,7 +752,7 @@ void xtCPMesh::TagRedVertex()
 					mData->mesh.data( fvit ).SetType( REDPNT );
 				}
 			}
-		}else if ( mData->mesh.data( fit ).Type()==GREEN ) {
+		} else if ( mData->mesh.data( fit ).Type()==GREEN ) {
 			txMyOPMesh::FVIter fvit=mData->mesh.fv_begin(fit);
 			for ( ; fvit!=mData->mesh.fv_end(fit); ++fvit ) {
 				if ( mData->mesh.data( fvit ).Type()==UN_TAGEDPNT ) {
@@ -782,6 +830,7 @@ void xtCPMesh::AddNewDifferenceFace( xtCPMesh &om )
 			}
 			**/
 			// one should check the new handle in the new model handle space
+			///**
 			if ( mData->mesh.data( vh[0] ).Type()!=XT_BOUNDARY_SPLIT_PNT ) {
 				std::swap( vh[1], vh[2] );
 			} else if ( mData->mesh.data( vh[1] ).Type()!=XT_BOUNDARY_SPLIT_PNT ) {
@@ -789,11 +838,14 @@ void xtCPMesh::AddNewDifferenceFace( xtCPMesh &om )
 			} else if ( mData->mesh.data( vh[2] ).Type()!=XT_BOUNDARY_SPLIT_PNT ) {
 				std::swap( vh[0], vh[1] );
 			}
+			//**/
 			//std::swap(vh[0],vh[1]); 
 			mData->mesh.add_face( vh );
 			printf( "face %d \n", fit.handle().idx() );
 		}
 	}
+
+	mData->mesh.garbage_collection();
 }
 
 void xtCPMesh::DeleteSelfGreenTrias()
