@@ -5,6 +5,7 @@
 #include "../xtGeometrySurfaceData.h"
 #include "../xtSplitBuilder.h"
 #include <queue>
+#include <algorithm>
 //#include "../xtCollisionEngine.h"
 
 xtCPMesh::xtCPMesh(void)
@@ -161,33 +162,21 @@ OUT:
 	; 
 }
 
+/**
+* 1) mark the intersection point's type
+* Actually this infomation can be abtain at the intersection test stage.
+* Here I just manually skip it.
+*/
+void xtCPMesh::MarkIstPointType()
+{
+	
+}
+
 void xtCPMesh::Remesh()
 {
 	
-	mData->mesh.add_property( vtype );
-	mData->mesh.add_property( ftype );
-
-	std::vector<txMyOPMesh::VHandle> vhandles;
-	for ( size_t i=0; i<mAbpool->mAbverts.size(); ++i ) {
-		xtAbosoluteVertex *v = mAbpool->mAbverts[i];
-		// first ignore the special case 
-		assert( v->type!=ON_SURFACE_I && v->type!=ON_SRUFACE_J ) ;
-		xtVector3d *p = v->splitpnt;
-		txMyOPMesh::VHandle vhandle = mData->mesh.add_vertex( txMyOPMesh::Point( (float)p->x(), (float)p->y(), (float)p->z() ) ) ;
-		mData->mesh.property( vtype, vhandle ) = XT_BOUNDARY_SPLIT_PNT;
-		mData->mesh.data( vhandle ).SetType( XT_BOUNDARY_SPLIT_PNT );
-		vhandles.push_back( vhandle );
-	}
-
-	mVHandleidxs.reserve( vhandles.size() );
-	for ( size_t i=0; i<vhandles.size(); ++i ) {
-		mVHandleidxs.push_back( vhandles[i].idx() );
-	}
-
-	assert(vhandles.size());
-	mNumIstPnts = vhandles.size();
-	mIstStartPntIdx = vhandles[0].idx();
-
+	//mData->mesh.add_property( vtype );
+	//mData->mesh.add_property( ftype );
 	std::vector<txMyOPMesh::VHandle> vhandle3; 
 	std::vector<txMyOPMesh::VHandle> vhandletem3(3);
 	vhandle3.reserve(3);
@@ -205,7 +194,30 @@ void xtCPMesh::Remesh()
 		vhandle3.clear();
 	}
 
-	//mData->mesh.garbage_collection();
+	mData->mesh.garbage_collection();
+
+
+	std::vector<txMyOPMesh::VHandle> vhandles;
+	vhandles.reserve( mAbpool->mAbverts.size() );
+	for ( size_t i=0; i<mAbpool->mAbverts.size(); ++i ) {
+		xtAbosoluteVertex *v = mAbpool->mAbverts[i];
+		// first ignore the special case 
+		assert( v->type!=ON_SURFACE_I && v->type!=ON_SRUFACE_J ) ;
+		xtVector3d *p = v->splitpnt;
+		txMyOPMesh::VHandle vhandle = mData->mesh.add_vertex( txMyOPMesh::Point( (float)p->x(), (float)p->y(), (float)p->z() ) ) ;
+		mData->mesh.data( vhandle ).SetType( XT_BOUNDARY_SPLIT_PNT );
+		vhandles.push_back( vhandle );
+	}
+
+	assert(vhandles.size());
+	mNumIstPnts = vhandles.size();
+	mIstStartPntIdx = vhandles[0].idx();
+
+	mVHandleidxs.reserve( vhandles.size() );
+	for ( size_t i=0; i<vhandles.size(); ++i ) {
+		mVHandleidxs.push_back( vhandles[i].idx() );
+	}
+
 
 	for ( size_t i=0; i<mCE->surfslot.size(); ++i ) {
 		xtSurfaceSlot *ss = mCE->surfslot[i];	
@@ -228,7 +240,6 @@ void xtCPMesh::Remesh()
 			// The ccw or cw may also be considered when feed into the OpenMesh API
 			std::swap( vhandletem3[1], vhandletem3[2] );
 			txMyOPMesh::FaceHandle fhandle = mData->mesh.add_face( vhandletem3 );
-			mData->mesh.property( ftype, fhandle ) = XT_INTERSECT_FACE;
 			printf( "Add face %d\t--%d \n" , ss->idx, triidx);
 			//vhandletem3.clear();
 		}
@@ -622,5 +633,223 @@ void xtCPMesh::DumpTaggedRed()
 	{
 		std::cerr << x.what() << std::endl;
 		//return 1;
+	}
+}
+
+void xtCPMesh::Union (xtCPMesh &om )
+{
+
+}
+
+void xtCPMesh::Difference( xtCPMesh &om )
+{
+	ReMarkRedGreenTria();
+	om.ReMarkRedGreenTria();
+	//DeleteSelfGreenTrias();
+	DeleteSelfRedTrias();
+
+	MatchBoundary(om);
+	MarkNewAssignedVertex(om);
+	AddNewDifferenceFace(om);
+
+	// debug dumpface
+	DumpMeshOff();
+}
+
+void xtCPMesh::Intersection( xtCPMesh &om )
+{
+
+}
+
+void xtCPMesh::MatchBoundary( xtCPMesh &om )
+{
+	//==============================================
+	// Match the Boundary
+	assert( mIstOrder.size()==om.mIstOrder.size() );
+	assert( om.mIstOrder.size()>2 );
+	const int istlen = om.mIstOrder.size();
+
+	std::vector<unsigned int>::iterator fit0 = std::find( om.mIstOrder.begin(), om.mIstOrder.end(), mIstOrder[0] );
+	if ( fit0!=om.mIstOrder.end() ) {
+		const int omidx0 = std::distance( om.mIstOrder.begin(), fit0 );
+		if ( om.mIstOrder[(omidx0+1)%istlen]==mIstOrder[1] ) {
+			int scout=0;
+			for ( int i=omidx0; i<omidx0+istlen; ++i ) {
+				om.mData->mesh.data( om.mData->mesh.vertex_handle(
+					om.mVHandleidxs[om.mIstOrder[i%istlen]] ) 
+					).SetReassingedIdx( mVHandleidxs[mIstOrder[scout++]] );
+			}
+		} else if ( om.mIstOrder[(omidx0-1+istlen)%istlen]==mIstOrder[1] ) {
+			int scout=0;
+			for ( int i=omidx0; i>omidx0-istlen; --i ) {
+				om.mData->mesh.data( om.mData->mesh.vertex_handle(
+					om.mVHandleidxs[om.mIstOrder[(i+istlen)%istlen]] )
+					).SetReassingedIdx( mVHandleidxs[mIstOrder[scout++]] );
+			}
+		} else {
+			assert(false);
+		}
+	}
+
+}
+
+void xtCPMesh::TagRedVertex()
+{
+	txMyOPMesh::FaceIter fit=mData->mesh.faces_begin();
+	for ( ; fit!=mData->mesh.faces_end(); ++fit ) {
+		if ( mData->mesh.data( fit ).Type()==RED ) {
+			txMyOPMesh::FVIter fvit=mData->mesh.fv_begin(fit);
+			for ( ; fvit!=mData->mesh.fv_end(fit); ++fvit ) {
+				if ( mData->mesh.data( fvit ).Type()==UN_TAGEDPNT ) {
+					mData->mesh.data( fvit ).SetType( REDPNT );
+				}
+			}
+		}else if ( mData->mesh.data( fit ).Type()==GREEN ) {
+			txMyOPMesh::FVIter fvit=mData->mesh.fv_begin(fit);
+			for ( ; fvit!=mData->mesh.fv_end(fit); ++fvit ) {
+				if ( mData->mesh.data( fvit ).Type()==UN_TAGEDPNT ) {
+					// This tag GREENPNT will overwrite the boundary points?
+					// Answer: definately not, the intersection points have been tag another enum
+					mData->mesh.data( fvit ).SetType( GREENPNT );
+				}
+			}
+		}
+	}
+}
+
+void xtCPMesh::MarkNewAssignedVertex( xtCPMesh &om )
+{
+	om.TagRedVertex();
+
+	txMyOPMesh &omesh = om.mData->mesh;
+
+	txMyOPMesh::VIter vit=omesh.vertices_begin();
+	// There're two operations
+	// first add the other model's red point into the the model's points
+	// second the add operatio will return a handle index this handle and
+	// push back this index to the other model to used in the other model face's 
+	// push back is the second opertion.
+	for ( ; vit!=omesh.vertices_end(); ++vit ) {
+		if ( omesh.data( vit ).Type()==REDPNT ) {
+			omesh.data( vit ).SetReassingedIdx(                   
+				mData->mesh.add_vertex( omesh.point(vit) ).idx()  
+				);
+		}
+	}
+}
+
+void xtCPMesh::AddNewDifferenceFace( xtCPMesh &om )
+{
+	txMyOPMesh &omesh = om.mData->mesh;
+	txMyOPMesh::FIter fit=omesh.faces_begin();
+	std::vector<txMyOPMesh::VertexHandle> vh(3);
+	for ( ; fit!=omesh.faces_end(); ++fit ) {
+		if ( omesh.data( fit ).Type()==RED ) {
+			int vcount=0;
+			txMyOPMesh::FVIter fvit=omesh.fv_begin(fit);
+			for ( ; fvit!=omesh.fv_end(fit); ++fvit ) {
+				vh[vcount++]=omesh.vertex_handle(omesh.data(fvit).GetReAssignedIdx());
+			}
+			//vcount=0;
+			// reverse the face orentation. difference operation.
+			// There is a bug here, the point on the intersection point should not be swith
+			// with the point of redpnt enumatived
+			/**
+			if ( omesh.data( vh[0] ).Type()!=XT_BOUNDARY_SPLIT_PNT ) {
+				std::swap( vh[1], vh[2] );
+			} else if ( omesh.data( vh[1] ).Type()!=XT_BOUNDARY_SPLIT_PNT ) {
+				std::swap( vh[0], vh[2] );
+			} else if ( omesh.data( vh[2] ).Type()!=XT_BOUNDARY_SPLIT_PNT ) {
+				std::swap( vh[0], vh[1] );
+			}
+			**/
+			/**
+			if ( omesh.data( vh[0] ).Type()==XT_BOUNDARY_SPLIT_PNT &&
+				omesh.data( vh[1] ).Type()==XT_BOUNDARY_SPLIT_PNT ) {
+					std::swap( vh[0], vh[1] );
+			} else if (
+				omesh.data( vh[1] ).Type()==XT_BOUNDARY_SPLIT_PNT &&
+				omesh.data( vh[2] ).Type()==XT_BOUNDARY_SPLIT_PNT
+				) {
+					std::swap( vh[1], vh[2] );
+			} else if (
+				omesh.data( vh[2] ).Type()==XT_BOUNDARY_SPLIT_PNT &&
+				omesh.data( vh[0] ).Type()==XT_BOUNDARY_SPLIT_PNT
+				) {
+					std::swap( vh[2], vh[0] );
+			} else {
+				std::swap( vh[0], vh[1] );
+			}
+			**/
+			// one should check the new handle in the new model handle space
+			if ( mData->mesh.data( vh[0] ).Type()!=XT_BOUNDARY_SPLIT_PNT ) {
+				std::swap( vh[1], vh[2] );
+			} else if ( mData->mesh.data( vh[1] ).Type()!=XT_BOUNDARY_SPLIT_PNT ) {
+				std::swap( vh[2], vh[0] );
+			} else if ( mData->mesh.data( vh[2] ).Type()!=XT_BOUNDARY_SPLIT_PNT ) {
+				std::swap( vh[0], vh[1] );
+			}
+			//std::swap(vh[0],vh[1]); 
+			mData->mesh.add_face( vh );
+			printf( "face %d \n", fit.handle().idx() );
+		}
+	}
+}
+
+void xtCPMesh::DeleteSelfGreenTrias()
+{
+	txMyOPMesh::FIter fit=mData->mesh.faces_begin();
+	for ( ; fit!=mData->mesh.faces_end(); ++fit ) {
+		if ( mData->mesh.data( fit ).Type()==GREEN ) {
+			mData->mesh.delete_face( fit );
+		}
+	}
+
+	mData->mesh.garbage_collection();
+
+	xtDumpMeshUtil( mData->mesh, "greendeleted.off" );
+}
+
+void xtCPMesh::DeleteSelfRedTrias()
+{
+	txMyOPMesh::FIter fit=mData->mesh.faces_begin();
+	for ( ; fit!=mData->mesh.faces_end(); ++fit ) {
+		if ( mData->mesh.data( fit ).Type()==RED ) {
+			mData->mesh.delete_face( fit );
+		}
+	}
+
+	mData->mesh.garbage_collection();
+
+	xtDumpMeshUtil( mData->mesh, "reddeleted.off" );
+}
+
+/**
+* Here there is about two methods to tag the red green 
+* 1) use the contain info
+* 2) use the intersection boundary
+* The seconde method can be use the open area
+*/
+void xtCPMesh::ReMarkRedGreenTria()
+{
+	// find all the red and check it's real geometry type 
+	// does it is the two model overlap area. or the gouge free model
+	txMyOPMesh::FIter fit=mData->mesh.faces_begin();
+	for ( ; fit!=mData->mesh.faces_end(); ++fit ) {
+		if ( mData->mesh.data( fit ).Type()==RED ) {
+			mData->mesh.data( fit ).SetType( GREEN );
+		} else {
+			mData->mesh.data( fit ).SetType( RED );
+		}
+	}
+}
+
+void xtCPMesh::ReReMarkRedGreenTria()
+{
+	txMyOPMesh::FIter fit=mData->mesh.faces_begin();
+	for ( ; fit!=mData->mesh.faces_end(); ++fit ) {
+		if ( mData->mesh.data( fit ).Type()!=RED ) {
+			mData->mesh.data( fit ).SetType( GREEN );
+		}
 	}
 }

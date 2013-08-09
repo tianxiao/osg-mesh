@@ -89,3 +89,58 @@ void xtOpenmeshText::TestOppositeFaceHandel()
 	}
 
 }
+
+void xtOpenmeshText::TestDeleteFaceTrue()
+{
+	//txOPMesh mesh;  // cannot be deleted
+	txMyOPMesh mesh;
+	txMyOPMesh::Point p[4];
+	p[0][0] = 0.0;
+	p[0][1] = 0.0;
+	p[1][0] = 1.0;
+	p[1][1] = 0.0;
+	p[2][0] = 1.0;
+	p[2][1] = 1.0;
+	p[3][0] = 0.0;
+	p[3][1] = 1.0;
+	for ( int i=0; i<4; ++i ) {
+		p[i][2] = 0.0;
+	}
+	txMyOPMesh::VertexHandle vh[4];
+	for ( int i=0; i<4; ++i ) {
+		vh[i] = mesh.add_vertex( p[i] );
+	}
+
+	std::vector<txMyOPMesh::FaceHandle> fh(2);
+
+	std::vector<txMyOPMesh::VertexHandle> vhtri(3);
+	vhtri[0] = vh[0];
+	vhtri[1] = vh[1];
+	vhtri[2] = vh[3];
+	fh[0] = mesh.add_face( vhtri );
+	vhtri[0] = vh[3];
+	vhtri[1] = vh[1];
+	vhtri[2] = vh[2];
+	fh[1] = mesh.add_face( vhtri );
+
+	// if you want use the delete face api you have to customize the traits;
+	mesh.delete_face( fh[1] );
+
+	// One should run the garbage_collection to not infinite loop in IO output
+	mesh.garbage_collection();
+
+	// write mesh to output.obj
+	try
+	{
+		if ( !OpenMesh::IO::write_mesh(mesh, "testsquare.off") )
+		{
+			std::cerr << "Cannot write mesh to file 'output.off'" << std::endl;
+			//return 1;
+		}
+	} catch ( std::exception& x )
+	{
+		std::cerr << x.what() << std::endl;
+		//return 1;
+	}
+
+}

@@ -29,13 +29,20 @@ struct xtTraits :public OpenMesh::DefaultTraits
 	{
 	private:
 		xtIntersectionPnt type;
+		xtPntOverlapState pnttype;
+		int resignedIdx;
 		
 	public:
-		VertexT():type( UN_TAGEDPNT ) {};
+		VertexT():type( UN_TAGEDPNT ), resignedIdx(-1), pnttype(PNT_UNTAGGED) {};
 
 		xtIntersectionPnt Type() { return type; };
 		void SetType(xtIntersectionPnt type) { this->type=type; }; 
 
+		int GetReAssignedIdx() { return this->resignedIdx; };
+		void SetReassingedIdx(int idx) { this->resignedIdx=idx; }; 
+
+		xtPntOverlapState PntType() { return pnttype; };
+		void SetPntType(xtPntOverlapState state ) { this->pnttype = state };
 	};
 
 	FaceTraits
@@ -133,6 +140,22 @@ struct xtOPFaceHolder
 	xtOPFaceType ft;
 	xtUnionType  ut;
 };
+
+inline void xtDumpMeshUtil( txMyOPMesh &mesh, char *filename ) 
+{
+	try
+	{
+		if ( !OpenMesh::IO::write_mesh(mesh, filename) )
+		{
+			std::cerr << "Cannot write mesh to file 'output.off'" << std::endl;
+			//return 1;
+		}
+	} catch ( std::exception& x )
+	{
+		std::cerr << x.what() << std::endl;
+		//return 1;
+	}
+}
 
 
 

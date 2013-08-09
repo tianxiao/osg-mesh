@@ -44,9 +44,14 @@ public:
 
 	void LoadRawData(xtCollisionEntity *ce, xtAbosoluteVertexPool *abpool);
 
+	void Union (xtCPMesh &om );
+	void Difference( xtCPMesh &om );
+	void Intersection( xtCPMesh &om );
+
 private:
 	void BuildRawMesh();
 	void AttachSSToMeshFaceTraitsOrder();
+	void MarkIstPointType();
 	void Remesh();
 	void TrackInterface();
 	// double check and accelerate by the face neighborhood info
@@ -57,9 +62,23 @@ private:
 	void TagFace2();
 	bool IsIstEdgeFace( int fhandleidx ) ;
 	bool IsTwoFaceSeperatedByIstEdge(int f0, int f1);
+	// this red green is truly have the overlap meanings
+	void ReMarkRedGreenTria();
+	void ReReMarkRedGreenTria();
+
+	// boolean operation 
+	void MatchBoundary( xtCPMesh &om );
+	void MarkNewAssignedVertex( xtCPMesh &om );
+	void TagRedVertex();
+	void TagGreenVertex();
+	void AddNewDifferenceFace( xtCPMesh &om );
+	void DeleteSelfGreenTrias();
+	void DeleteSelfRedTrias();
+
 	// for debug
 	void DumpMeshOff();
 	void DumpTaggedRed();
+	
 	
 
 
@@ -74,11 +93,22 @@ private:
 	std::vector<unsigned int> mIstHalfedgeIdxList;
 	std::vector<unsigned int> mIstVertHandleIdxList;
 	// Cache the intersect boundary order
-	std::vector<unsigned int> mIstOrder;
+	// cache the original split point's reorder vIdInPool index
+	std::vector<unsigned int> mIstOrder;   
+	// cache the addin split point's 
 	std::vector<unsigned int> mVHandleidxs;
 
 	// only for debug
 	std::vector<unsigned int> mHEBs;
 	std::vector<unsigned int> mFacepro;
+};
+
+
+class xtBooleanProblem
+{
+	void SetModel()
+	{
+		
+	}
 };
 
